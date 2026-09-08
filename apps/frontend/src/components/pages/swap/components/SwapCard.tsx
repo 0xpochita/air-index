@@ -159,7 +159,7 @@ export const SwapCard = ({ index, indexes }: SwapCardProps) => {
         />
         <span
           aria-hidden
-          className="absolute top-1/2 left-1/2 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-surface"
+          className="absolute top-1/2 left-1/2 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-canvas/70 bg-surface/90 backdrop-blur-sm"
         >
           <ArrowDownIcon size={13} weight="bold" className="text-ink-muted" />
         </span>

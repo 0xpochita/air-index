@@ -23,7 +23,7 @@ export const CollectionCard = ({ collection }: CollectionCardProps) => (
         <li key={index.slug}>
           <Link
             href={indexHref(index.slug)}
-            className="flex items-center justify-between gap-3 rounded-md bg-surface px-3 py-2.5 transition-colors duration-150 ease-out hover:bg-surface-hover"
+            className="flex items-center justify-between gap-3 rounded-md bg-canvas/70 px-3 py-2.5 transition-colors duration-150 ease-out hover:bg-canvas/90"
           >
             <span className="flex min-w-0 items-center gap-2.5">
               <TokenStack

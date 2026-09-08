@@ -13,7 +13,7 @@ interface FeaturedIndexCardProps {
 export const FeaturedIndexCard = ({ index }: FeaturedIndexCardProps) => (
   <Link
     href={indexHref(index.slug)}
-    className="group flex flex-col justify-between rounded-xl border border-line bg-surface-subtle p-5 shadow-raised transition-colors duration-150 ease-out hover:bg-surface-hover"
+    className="group flex flex-col justify-between rounded-xl border border-canvas/70 bg-surface-subtle/75 p-5 shadow-glass backdrop-blur-xl transition-colors duration-150 ease-out hover:bg-surface/85"
   >
     <div className="space-y-4">
       <TokenStack constituents={index.constituents} size="lg" maxVisible={5} />

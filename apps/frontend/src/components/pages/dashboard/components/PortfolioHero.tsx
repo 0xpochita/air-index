@@ -6,6 +6,7 @@ import { SITE } from "@/config/site";
 import { formatUsd } from "@/lib/format";
 
 const IMAGE_QUALITY = 90;
+const IMAGE_FADE = "linear-gradient(to right, transparent 0%, black 60%)";
 
 interface PortfolioHeroProps {
   totalValueUsd: number;
@@ -18,10 +19,11 @@ export const PortfolioHero = ({
   dayChangePct,
   indexCount,
 }: PortfolioHeroProps) => (
-  <section className="relative isolate min-h-48 overflow-hidden rounded-xl border border-line bg-surface">
+  <section className="relative isolate min-h-48 overflow-hidden rounded-xl border border-canvas/70 bg-surface/72 shadow-glass backdrop-blur-xl">
     <div
       aria-hidden
-      className="pointer-events-none absolute inset-y-0 right-0 w-3/5 sm:w-1/2 lg:w-2/5"
+      style={{ maskImage: IMAGE_FADE, WebkitMaskImage: IMAGE_FADE }}
+      className="pointer-events-none absolute inset-y-0 right-0 w-3/5 opacity-70 sm:w-1/2 lg:w-2/5"
     >
       <Image
         src="/assets/flowers-bg.jpg"
@@ -32,7 +34,6 @@ export const PortfolioHero = ({
         sizes="(max-width: 640px) 60vw, (max-width: 1024px) 50vw, 460px"
         className="object-cover object-center"
       />
-      <div className="absolute inset-0 bg-linear-to-r from-surface via-surface/70 to-transparent" />
     </div>
 
     <div className="relative flex max-w-lg flex-col gap-4 p-6">

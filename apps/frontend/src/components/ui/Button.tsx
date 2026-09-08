@@ -9,7 +9,8 @@ const BASE_CLASS =
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary: "bg-accent text-ink-inverse hover:bg-accent-hover",
-  secondary: "border border-line bg-surface text-ink hover:bg-surface-hover",
+  secondary:
+    "border border-canvas/70 bg-surface/70 text-ink backdrop-blur-sm hover:bg-surface/90",
   ghost: "text-ink-muted hover:bg-surface-hover hover:text-ink",
 };
 

@@ -4,7 +4,7 @@ import { CaretDownIcon } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 
 const CHIP_CLASS =
-  "flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1.5 pr-3 pl-1.5 text-sm font-semibold text-ink";
+  "flex shrink-0 items-center gap-2 rounded-full border border-canvas/70 bg-surface/90 py-1.5 pr-3 pl-1.5 text-sm font-semibold text-ink";
 
 interface AssetChipProps {
   icon: ReactNode;

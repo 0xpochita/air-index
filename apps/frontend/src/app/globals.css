@@ -9,12 +9,12 @@
 
   --color-canvas: oklch(1 0 0);
   --color-surface: oklch(1 0 0);
-  --color-surface-subtle: oklch(0.985 0.002 247);
-  --color-surface-hover: oklch(0.968 0.003 247);
-  --color-surface-accent: oklch(0.978 0.012 250);
+  --color-surface-subtle: oklch(0.976 0.009 250);
+  --color-surface-hover: oklch(0.955 0.016 250);
+  --color-surface-accent: oklch(0.962 0.028 250);
 
-  --color-line: oklch(0.922 0.004 247);
-  --color-line-strong: oklch(0.87 0.006 247);
+  --color-line: oklch(0.928 0.011 250);
+  --color-line-strong: oklch(0.87 0.016 250);
 
   --color-ink: oklch(0.205 0.008 250);
   --color-ink-muted: oklch(0.505 0.012 250);
@@ -35,6 +35,9 @@
 
   --shadow-raised: 0 1px 2px 0 oklch(0.2 0.01 250 / 0.05);
   --shadow-floating: 0 4px 16px -4px oklch(0.2 0.01 250 / 0.1);
+  --shadow-glass:
+    0 1px 1px 0 oklch(0.45 0.06 250 / 0.04),
+    0 10px 30px -14px oklch(0.45 0.1 250 / 0.28);
 }
 
 @layer base {

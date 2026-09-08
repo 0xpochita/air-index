@@ -3,7 +3,7 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 
 const FIELD_CLASS =
-  "w-full rounded-md border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-subtle";
+  "w-full rounded-md border border-line bg-surface/80 px-3 py-2.5 text-sm text-ink placeholder:text-ink-subtle";
 const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-ink-subtle";
 
 interface IdentityCardProps {
