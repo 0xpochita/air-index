@@ -1,15 +1,15 @@
 "use client";
 
-import { CaretDownIcon, WindIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  CaretDownIcon,
+  ChartPieSliceIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import {
-  indexHref,
-  type NavItem,
-  PRIMARY_NAV,
-  SECONDARY_NAV,
-} from "@/config/navigation";
+import { TokenStack } from "@/components/ui/TokenStack";
+import { indexHref, type NavItem, PRIMARY_NAV } from "@/config/navigation";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
 import { formatSignedPercent, formatUsd } from "@/lib/format";
@@ -53,11 +53,13 @@ export const Sidebar = ({ positions }: SidebarProps) => {
   return (
     <aside className="flex h-full flex-col gap-8 border-r border-line bg-canvas px-4 py-5">
       <Link href="/explore" className="flex items-center gap-2 px-3">
-        <WindIcon
-          size={22}
-          weight="duotone"
-          className="text-accent"
-          aria-hidden
+        <Image
+          src="/assets/logo-airindex.png"
+          alt=""
+          width={28}
+          height={28}
+          priority
+          className="rounded-md"
         />
         <span className="text-base font-semibold tracking-tight text-ink">
           {SITE.name}
@@ -73,18 +75,35 @@ export const Sidebar = ({ positions }: SidebarProps) => {
           />
         ))}
 
-        <div className="mt-2">
+        <div className="relative">
+          <Link
+            href="/portfolio"
+            aria-current={isActive("/portfolio") ? "page" : undefined}
+            className={cn(
+              LINK_CLASS,
+              "pr-10",
+              isActive("/portfolio")
+                ? "bg-surface-hover font-semibold text-ink"
+                : "font-medium text-ink-muted hover:bg-surface-hover hover:text-ink",
+            )}
+          >
+            <ChartPieSliceIcon
+              size={18}
+              weight={isActive("/portfolio") ? "fill" : "regular"}
+              aria-hidden
+            />
+            Portfolio
+          </Link>
+
           <button
             type="button"
             onClick={() => setIsPortfolioOpen((open) => !open)}
             aria-expanded={isPortfolioOpen}
-            className={cn(
-              LINK_CLASS,
-              "w-full font-medium text-ink-muted hover:text-ink",
-            )}
+            aria-controls="portfolio-positions"
+            className="absolute top-1/2 right-1.5 -translate-y-1/2 rounded-md p-1 text-ink-subtle transition-colors duration-150 ease-out hover:bg-surface hover:text-ink"
           >
             <CaretDownIcon
-              size={16}
+              size={14}
               weight="bold"
               aria-hidden
               className={cn(
@@ -92,22 +111,44 @@ export const Sidebar = ({ positions }: SidebarProps) => {
                 !isPortfolioOpen && "-rotate-90",
               )}
             />
-            Portfolio
+            <span className="sr-only">
+              {isPortfolioOpen ? "Collapse holdings" : "Expand holdings"}
+            </span>
           </button>
+        </div>
 
-          {isPortfolioOpen ? (
-            <ul className="mt-1 flex flex-col gap-1">
-              {positions.map((position) => (
-                <li key={position.index.slug}>
-                  <Link
-                    href={indexHref(position.index.slug)}
-                    className="block rounded-md px-3 py-2 transition-colors duration-150 ease-out hover:bg-surface-hover"
-                  >
+        {isPortfolioOpen ? (
+          <ul
+            id="portfolio-positions"
+            className="ml-6 flex flex-col gap-0.5 border-l border-line pl-2"
+          >
+            {positions.map((position) => (
+              <li key={position.index.slug}>
+                <Link
+                  href={indexHref(position.index.slug)}
+                  aria-current={
+                    isActive(indexHref(position.index.slug))
+                      ? "page"
+                      : undefined
+                  }
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-1.5 transition-colors duration-150 ease-out",
+                    isActive(indexHref(position.index.slug))
+                      ? "bg-surface-hover"
+                      : "hover:bg-surface-hover",
+                  )}
+                >
+                  <TokenStack
+                    constituents={position.index.constituents}
+                    size="sm"
+                    maxVisible={3}
+                  />
+                  <span className="min-w-0">
                     <span className="block truncate text-sm font-medium text-ink">
                       {position.index.name}
                     </span>
-                    <span className="mt-0.5 flex items-center gap-2 text-xs tabular-nums">
-                      <span className="text-ink-muted">
+                    <span className="flex items-center gap-1.5 text-xs tabular-nums">
+                      <span className="text-ink-subtle">
                         {formatUsd(position.valueUsd)}
                       </span>
                       <span
@@ -120,22 +161,12 @@ export const Sidebar = ({ positions }: SidebarProps) => {
                         {formatSignedPercent(position.dayChangePct)}
                       </span>
                     </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      </nav>
-
-      <nav aria-label="Secondary" className="mt-auto flex flex-col gap-1">
-        {SECONDARY_NAV.map((item) => (
-          <SidebarLink
-            key={item.href}
-            item={item}
-            isActive={isActive(item.href)}
-          />
-        ))}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </nav>
     </aside>
   );
