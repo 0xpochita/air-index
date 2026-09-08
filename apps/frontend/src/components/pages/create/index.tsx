@@ -1,12 +1,9 @@
-import { PageHeader } from "@/components/ui/PageHeader";
+import { CreateHero } from "./components/CreateHero";
 import { IndexBuilderForm } from "./components/IndexBuilderForm";
 
 export const CreatePage = () => (
-  <div className="mx-auto max-w-3xl space-y-8">
-    <PageHeader
-      title="Create an index"
-      description="Every constituent becomes a subname. Weights are published as text records anyone can read."
-    />
+  <div className="mx-auto max-w-3xl space-y-6">
+    <CreateHero />
     <IndexBuilderForm />
   </div>
 );

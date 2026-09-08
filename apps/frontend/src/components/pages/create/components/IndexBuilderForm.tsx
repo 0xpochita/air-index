@@ -1,6 +1,5 @@
 "use client";
 
-import { PlusIcon } from "@phosphor-icons/react/dist/ssr";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -10,6 +9,7 @@ import { formatWeight } from "@/lib/format";
 import { TOKENS } from "@/lib/mock/tokens";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
 import { ConstituentRow } from "./ConstituentRow";
+import { TokenPickerDialog } from "./TokenPickerDialog";
 
 const TOTAL_WEIGHT_BPS = 10_000;
 const DEFAULT_SYMBOLS: TokenSymbol[] = ["weth", "wbtc", "uni"];
@@ -155,32 +155,10 @@ export const IndexBuilderForm = () => {
         )}
 
         <div className="border-t border-line px-5 py-4">
-          <label htmlFor="add-token" className={LABEL_CLASS}>
-            Add token
-          </label>
-          <div className="flex items-center gap-2">
-            <select
-              id="add-token"
-              value=""
-              onChange={(event) => addSymbol(event.target.value as TokenSymbol)}
-              disabled={availableSymbols.length === 0}
-              className={FIELD_CLASS}
-            >
-              <option value="" disabled>
-                Select a token
-              </option>
-              {availableSymbols.map((symbol) => (
-                <option key={symbol} value={symbol}>
-                  {TOKENS[symbol].name}
-                </option>
-              ))}
-            </select>
-            <PlusIcon
-              size={18}
-              aria-hidden
-              className="shrink-0 text-ink-subtle"
-            />
-          </div>
+          <TokenPickerDialog
+            availableSymbols={availableSymbols}
+            onSelect={addSymbol}
+          />
         </div>
       </Card>
 
