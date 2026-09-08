@@ -1,6 +1,12 @@
 @import "tailwindcss";
 
 @theme {
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display",
+    "Helvetica Neue", system-ui, sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", SFMono-Regular, Menlo, Monaco, monospace;
+
   --color-canvas: oklch(1 0 0);
   --color-surface: oklch(1 0 0);
   --color-surface-subtle: oklch(0.985 0.002 247);
@@ -39,7 +45,7 @@
   body {
     background-color: var(--color-canvas);
     color: var(--color-ink);
-    font-family: var(--font-sans), system-ui, sans-serif;
+    font-family: var(--font-sans);
   }
 
   :focus-visible {
