@@ -1,0 +1,65 @@
+import Image from "next/image";
+import { ButtonLink } from "@/components/ui/Button";
+import { ReturnValue } from "@/components/ui/ReturnValue";
+import { SITE } from "@/config/site";
+import { formatUsd } from "@/lib/format";
+
+const IMAGE_QUALITY = 90;
+
+interface PortfolioHeroProps {
+  totalValueUsd: number;
+  dayChangePct: number;
+  indexCount: number;
+}
+
+export const PortfolioHero = ({
+  totalValueUsd,
+  dayChangePct,
+  indexCount,
+}: PortfolioHeroProps) => (
+  <section className="relative isolate min-h-60 overflow-hidden rounded-xl border border-line bg-surface">
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-y-0 right-0 w-3/5 sm:w-1/2 lg:w-2/5"
+    >
+      <Image
+        src="/assets/flowers-bg.jpg"
+        alt=""
+        fill
+        priority
+        quality={IMAGE_QUALITY}
+        sizes="(max-width: 640px) 60vw, (max-width: 1024px) 50vw, 460px"
+        className="object-cover object-center"
+      />
+      <div className="absolute inset-0 bg-linear-to-r from-surface via-surface/70 to-transparent" />
+    </div>
+
+    <div className="relative flex max-w-lg flex-col gap-6 p-6 sm:p-8">
+      <div className="space-y-3">
+        <p className="text-sm text-ink-muted">Portfolio value</p>
+        <p className="text-4xl font-semibold tracking-tight tabular-nums text-ink">
+          {formatUsd(totalValueUsd)}
+        </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <ReturnValue value={dayChangePct} />
+          <span className="text-sm text-ink-muted">past 24 hours</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-ink-muted">
+            {indexCount === 1 ? "1 index held" : `${indexCount} indexes held`}
+          </span>
+          <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-ink-muted">
+            {SITE.network}
+          </span>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <ButtonLink href="/explore">Explore indexes</ButtonLink>
+        <ButtonLink href="/create" variant="secondary">
+          Create an index
+        </ButtonLink>
+      </div>
+    </div>
+  </section>
+);
