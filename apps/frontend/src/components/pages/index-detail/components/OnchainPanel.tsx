@@ -1,0 +1,72 @@
+import {
+  BroadcastIcon,
+  LockSimpleIcon,
+  SealCheckIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import { Badge } from "@/components/ui/Badge";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { SITE } from "@/config/site";
+import type { OnchainIndex } from "@/lib/ens/indexes";
+import { truncateAddress } from "@/lib/format";
+
+interface OnchainPanelProps {
+  onchain: OnchainIndex;
+}
+
+export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
+  <Card>
+    <CardHeader
+      title="Onchain state"
+      action={
+        <Badge tone="positive">
+          <BroadcastIcon size={12} weight="fill" aria-hidden />
+          {`Live on ${SITE.network}`}
+        </Badge>
+      }
+    />
+    <dl className="space-y-2.5 px-5 pb-5 text-sm">
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Resolver</dt>
+        <dd className="font-mono text-xs text-ink">
+          {truncateAddress(onchain.resolver)}
+        </dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Owner</dt>
+        <dd className="font-mono text-xs text-ink">
+          {truncateAddress(onchain.owner)}
+        </dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Constituents</dt>
+        <dd className="tabular-nums text-ink">{onchain.constituents.length}</dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Resolver provenance</dt>
+        <dd>
+          {onchain.isVerifiedResolver ? (
+            <Badge tone="accent">
+              <SealCheckIcon size={12} weight="fill" aria-hidden />
+              Factory verified
+            </Badge>
+          ) : (
+            <span className="text-xs text-ink-muted">Unverified</span>
+          )}
+        </dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Methodology</dt>
+        <dd>
+          {onchain.isMethodologyLocked ? (
+            <Badge tone="positive">
+              <LockSimpleIcon size={12} weight="fill" aria-hidden />
+              Locked
+            </Badge>
+          ) : (
+            <span className="text-xs text-ink-muted">Editable</span>
+          )}
+        </dd>
+      </div>
+    </dl>
+  </Card>
+);

@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { IndexDetailPage } from "@/components/pages/index-detail";
+import { fetchOnchainIndex } from "@/lib/ens/indexes";
 import { getAllIndexes, getIndexBySlug } from "@/lib/mock/indexes";
+
+/** Records change only when a creator publishes, so a short window is enough. */
+export const revalidate = 60;
 
 interface IndexRouteProps {
   params: Promise<{ slug: string }>;
@@ -36,5 +40,7 @@ export default async function IndexRoute({ params }: IndexRouteProps) {
     notFound();
   }
 
-  return <IndexDetailPage index={index} />;
+  const onchain = await fetchOnchainIndex(slug).catch(() => null);
+
+  return <IndexDetailPage index={index} onchain={onchain} />;
 }
