@@ -26,12 +26,17 @@ const withAdmin = (role: bigint) => role | (role << 128n);
 /**
  * Contenthash, clear and upgrade are granted so step 5 can burn all three. The
  * record setters stay so a rebalancer can still update weights afterwards.
+ *
+ * SET_ALIAS has to be granted here or tickers and mirrors become impossible for
+ * the life of the resolver: it is root only, its admin cannot be added later,
+ * and the lock burns the upgrade role that would otherwise allow a migration.
  */
 const INDEX_RESOLVER_ROLES =
   withAdmin(RESOLVER_ROLE.SET_ADDR) |
   withAdmin(RESOLVER_ROLE.SET_TEXT) |
   withAdmin(RESOLVER_ROLE.SET_DATA) |
   withAdmin(RESOLVER_ROLE.SET_CONTENTHASH) |
+  withAdmin(RESOLVER_ROLE.SET_ALIAS) |
   withAdmin(RESOLVER_ROLE.CLEAR) |
   withAdmin(RESOLVER_ROLE.UPGRADE);
 
@@ -126,17 +131,23 @@ const run = async () => {
   const calls = [
     ...index.constituents.flatMap((entry) => {
       const node = toNode(`${entry.token.symbol}.${index.ensName}`);
+      const weightCall = encodeFunctionData({
+        abi: permissionedResolverAbi,
+        functionName: "setText",
+        args: [node, WEIGHT_KEY, String(entry.weightBps)],
+      });
+
+      if (entry.token.address === ZERO_ADDRESS) {
+        return [weightCall];
+      }
+
       return [
         encodeFunctionData({
           abi: permissionedResolverAbi,
           functionName: "setAddr",
           args: [node, entry.token.address],
         }),
-        encodeFunctionData({
-          abi: permissionedResolverAbi,
-          functionName: "setText",
-          args: [node, WEIGHT_KEY, String(entry.weightBps)],
-        }),
+        weightCall,
       ];
     }),
     encodeFunctionData({
@@ -213,14 +224,26 @@ const run = async () => {
     "the constituent list must resolve",
   );
 
+  const expectedWeights = new Map(
+    index.constituents.map((entry) => [
+      entry.token.symbol as string,
+      String(entry.weightBps),
+    ]),
+  );
+
   for (const symbol of labels) {
-    const name = `${symbol}.${index.ensName}`;
-    const [addr, weight] = await Promise.all([
-      ensClient.getEnsAddress({ name }),
-      ensClient.getEnsText({ name, key: WEIGHT_KEY }),
-    ]);
-    console.log(`  ${name.padEnd(34)} ${addr} ${weight}`);
-    assert.ok(addr, `${name} must resolve an address`);
+    const name: string = `${symbol}.${index.ensName}`;
+    const [addr, weight]: [`0x${string}` | null, string | null] =
+      await Promise.all([
+        ensClient.getEnsAddress({ name }),
+        ensClient.getEnsText({ name, key: WEIGHT_KEY }),
+      ]);
+    console.log(`  ${name.padEnd(34)} ${addr ?? "native"} ${weight}`);
+    assert.equal(
+      weight,
+      expectedWeights.get(symbol),
+      `${name} must resolve its weight`,
+    );
   }
 
   console.log(`\n${index.ensName} is live`);
