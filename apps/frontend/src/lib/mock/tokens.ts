@@ -174,3 +174,10 @@ export const TOKENS = {
 } as const satisfies Record<TokenSymbol, Token>;
 
 export const getToken = (symbol: TokenSymbol): Token => TOKENS[symbol];
+
+const isTokenSymbol = (symbol: string): symbol is TokenSymbol =>
+  symbol in TOKENS;
+
+/** Display metadata lookup for a symbol published onchain. */
+export const findToken = (symbol: string): Token | undefined =>
+  isTokenSymbol(symbol) ? TOKENS[symbol] : undefined;

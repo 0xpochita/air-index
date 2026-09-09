@@ -6,17 +6,10 @@ import {
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { sepolia } from "viem/chains";
+import { loadEnv } from "./env";
 
 const FALLBACK_RPC = "https://ethereum-sepolia-rpc.publicnode.com";
 const MIN_BALANCE_WEI = 300_000_000_000_000n;
-
-const loadEnv = () => {
-  try {
-    process.loadEnvFile(".env");
-  } catch {
-    return;
-  }
-};
 
 loadEnv();
 
@@ -44,6 +37,28 @@ export const getWallet = () => {
   if (!key.startsWith("0x") || key.length !== 66) {
     throw new Error(
       "DEPLOYER_PRIVATE_KEY must be a 0x-prefixed 32 byte hex string.",
+    );
+  }
+
+  const account = privateKeyToAccount(key as `0x${string}`);
+
+  return {
+    account,
+    client: createWalletClient({
+      account,
+      chain: sepolia,
+      transport: http(rpcUrl),
+    }),
+  };
+};
+
+/** The delegated rebalancer, used to prove that record scoping actually holds. */
+export const getAgentWallet = () => {
+  const key = process.env.REBALANCER_PRIVATE_KEY;
+
+  if (!key) {
+    throw new Error(
+      "REBALANCER_PRIVATE_KEY is empty. Generate a throwaway agent key first.",
     );
   }
 

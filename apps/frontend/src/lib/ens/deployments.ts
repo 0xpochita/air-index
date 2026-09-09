@@ -30,3 +30,11 @@ export const PROTOCOL_ROOT = "airindex.eth";
 export const AIR_INDEX_REGISTRY = process.env.NEXT_PUBLIC_AIR_INDEX_REGISTRY as
   | `0x${string}`
   | undefined;
+
+/**
+ * Public RPCs cap eth_getLogs at 50k blocks, so scanning from genesis fails.
+ * bootstrap.ts records the registry deploy block here to bound the query.
+ */
+export const AIR_INDEX_FROM_BLOCK = process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK
+  ? BigInt(process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK)
+  : undefined;
