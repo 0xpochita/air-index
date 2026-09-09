@@ -1,4 +1,4 @@
-import { LockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
+import { BroadcastIcon, LockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { ReturnValue } from "@/components/ui/ReturnValue";
 import { TokenStack } from "@/components/ui/TokenStack";
@@ -10,9 +10,10 @@ const HEADER_CLASS = "px-4 py-3 text-xs font-medium text-ink-subtle";
 
 interface IndexTableProps {
   indexes: IndexFund[];
+  liveSlugs: Set<string>;
 }
 
-export const IndexTable = ({ indexes }: IndexTableProps) => (
+export const IndexTable = ({ indexes, liveSlugs }: IndexTableProps) => (
   <div className="overflow-x-auto">
     <table className="w-full min-w-[52rem] border-collapse text-left">
       <thead>
@@ -49,6 +50,14 @@ export const IndexTable = ({ indexes }: IndexTableProps) => (
                   <span className="text-sm font-medium text-ink">
                     {index.name}
                   </span>
+                  {liveSlugs.has(index.slug) ? (
+                    <BroadcastIcon
+                      size={13}
+                      weight="fill"
+                      aria-label="Live on Sepolia"
+                      className="text-positive"
+                    />
+                  ) : null}
                   {index.isMethodologyLocked ? (
                     <LockSimpleIcon
                       size={13}

@@ -1,6 +1,7 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { listPublishedSlugs } from "@/lib/ens/indexes";
 import {
   getAllIndexes,
   getCollections,
@@ -29,8 +30,9 @@ interface ExplorePageProps {
   page?: string;
 }
 
-export const ExplorePage = ({ page }: ExplorePageProps) => {
+export const ExplorePage = async ({ page }: ExplorePageProps) => {
   const indexes = getAllIndexes();
+  const liveSlugs = new Set(await listPublishedSlugs().catch(() => []));
   const collections = getCollections();
   const featured = getFeaturedIndex();
 
@@ -59,7 +61,7 @@ export const ExplorePage = ({ page }: ExplorePageProps) => {
         <CardHeader title="Highest total deposits" />
         {visibleIndexes.length > 0 ? (
           <>
-            <IndexTable indexes={visibleIndexes} />
+            <IndexTable indexes={visibleIndexes} liveSlugs={liveSlugs} />
             <TablePagination
               currentPage={currentPage}
               totalPages={totalPages}
