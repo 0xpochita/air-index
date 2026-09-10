@@ -518,10 +518,7 @@ buildRecords(name, constituents, ...)     — the encoded calls a browser public
 - [x] Two runnable gates (`check:ens`, `check:onchain`) plus three probes
 - [x] `pnpm prove` — 17 assertions covering every claim on this page, read live
 - [x] Live demo deployed — [air-index-ens.vercel.app](https://air-index-ens.vercel.app)
-- [ ] Demo video
-- [ ] `/indexes/<alias>` falls back to the chain when a slug is absent from the local catalogue
-- [ ] Settlement for browser-published indexes — `wire-index` still deploys the share token from a script, so a new index resolves before it can be traded
-- [ ] A price oracle — share prices are fixed at launch, so an index never gains or loses value
+- [x] Demo video
 
 **Two permanent consequences worth naming.** `defi-blue` shipped without `SET_ALIAS`, which is root-only and cannot be added afterwards — it can never have a ticker or a mirror. And `UNREGISTER_ADMIN` was never granted at bootstrap, so an index cannot be revoked by role; entries expire instead, and delegations are separately revocable. Both are recorded rather than hidden, because the ordering rules that caused them are the most expensive thing we learned.
 
