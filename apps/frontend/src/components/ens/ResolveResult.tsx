@@ -150,12 +150,6 @@ export const ResolveResult = ({ result }: ResolveResultProps) => {
           </Row>
         </dl>
       </section>
-
-      <p className="text-xs leading-relaxed text-ink-muted">
-        Every value came from <code className="font-mono">getEnsAddress</code>{" "}
-        and <code className="font-mono">getEnsText</code> on a stock viem client
-        — no ABI, no contract address, no configuration.
-      </p>
     </div>
   );
 };
