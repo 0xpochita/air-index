@@ -132,7 +132,7 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
                   <TokenIcon token={token} size="md" />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium text-ink">
-                      {`m${token.symbol.toUpperCase()}`}
+                      {token.symbol.toUpperCase()}
                     </span>
                     <span className="block truncate text-xs text-ink-subtle">
                       {token.name}
@@ -184,7 +184,7 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
         hash={last?.hash ?? null}
         title="Test tokens minted"
         icon={minted ? <TokenIcon token={minted} size="lg" /> : null}
-        detail={minted ? `1,000 m${minted.symbol.toUpperCase()}` : null}
+        detail={minted ? `1,000 ${minted.symbol.toUpperCase()}` : null}
         onDismiss={dismiss}
       />
     </>

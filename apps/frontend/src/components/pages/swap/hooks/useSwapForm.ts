@@ -59,7 +59,11 @@ export const useSwapForm = ({ live, alternate }: UseSwapFormOptions) => {
   const [amountInput, setAmountInput] = useState("");
 
   const quote = TOKENS[SETTLEMENT_SYMBOL];
-  const quoteSymbol = `m${SETTLEMENT_SYMBOL.toUpperCase()}`;
+  /**
+   * The deployed ERC20 calls itself `mUSDC`. The `m` says "mock", which the
+   * network already says, so the interface spells the ticker it stands for.
+   */
+  const quoteSymbol = SETTLEMENT_SYMBOL.toUpperCase();
   const quotePriceUsd = QUOTE_PRICE_USD[SETTLEMENT_SYMBOL];
 
   const unitPriceUsd = (slug: string): number =>
