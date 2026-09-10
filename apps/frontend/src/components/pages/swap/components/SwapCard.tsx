@@ -1,17 +1,15 @@
 "use client";
 
-import {
-  ArrowDownIcon,
-  ArrowSquareOutIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ArrowDownIcon } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { ReturnValue } from "@/components/ui/ReturnValue";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TokenStack } from "@/components/ui/TokenStack";
+import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
 import { SITE } from "@/config/site";
-import { formatUsd } from "@/lib/format";
+import { formatAmount, formatUsd } from "@/lib/format";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import type { LiveIndex } from "@/lib/onchain/vaults";
@@ -25,7 +23,13 @@ import { SwapSummary } from "./SwapSummary";
 
 const PAY_INPUT_ID = "swap-pay-amount";
 const RECEIVE_OUTPUT_ID = "swap-receive-amount";
-const EXPLORER_TX = "https://sepolia.etherscan.io/tx/";
+
+const SUCCESS_TITLE: Record<string, string> = {
+  deposit: "Deposit confirmed",
+  redeem: "Redemption confirmed",
+  swap: "Swap confirmed",
+  faucet: "Test tokens minted",
+};
 
 const ensLabel = (name: string) => (
   <span className="font-mono text-[13px] tracking-tight">{name}</span>
@@ -56,6 +60,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
 
   const others = liveIndexes.filter((entry) => entry.slug !== live.slug);
   const [alternateSlug, setAlternateSlug] = useState(others[0]?.slug ?? "");
+  const [receiptSummary, setReceiptSummary] = useState<string | null>(null);
   const alternate =
     others.find((entry) => entry.slug === alternateSlug) ?? others[0];
 
@@ -121,6 +126,14 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
     if (!live.vault) {
       return;
     }
+
+    /**
+     * Captured on click rather than read when the dialog renders, so editing
+     * the field while a transaction is in flight cannot rewrite the receipt.
+     */
+    setReceiptSummary(
+      `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`,
+    );
 
     if (form.mode === "deposit") {
       actions.deposit(live.vault, form.payAmountWei);
@@ -231,7 +244,10 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           <div className="flex items-center justify-between gap-4 text-xs">
             <button
               type="button"
-              onClick={() => actions.faucet(form.quote.address)}
+              onClick={() => {
+                setReceiptSummary(`1,000 ${form.quoteSymbol}`);
+                actions.faucet(form.quote.address);
+              }}
               disabled={isBusy}
               className="font-medium text-accent transition-colors duration-150 ease-out hover:text-accent-hover disabled:opacity-60"
             >
@@ -246,19 +262,16 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
         {actions.error ? (
           <p className="text-xs text-negative">{actions.error}</p>
         ) : null}
-
-        {actions.lastHash ? (
-          <a
-            href={`${EXPLORER_TX}${actions.lastHash}`}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover"
-          >
-            View last transaction
-            <ArrowSquareOutIcon size={12} aria-hidden />
-          </a>
-        ) : null}
       </div>
+
+      <TxSuccessDialog
+        hash={actions.last?.hash ?? null}
+        title={
+          SUCCESS_TITLE[actions.last?.label ?? ""] ?? "Transaction confirmed"
+        }
+        detail={receiptSummary}
+        onDismiss={actions.dismiss}
+      />
     </div>
   );
 };

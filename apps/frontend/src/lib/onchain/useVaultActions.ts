@@ -21,7 +21,10 @@ export const useVaultActions = () => {
     useWallet();
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [lastHash, setLastHash] = useState<`0x${string}` | null>(null);
+  const [last, setLast] = useState<{
+    label: string;
+    hash: `0x${string}`;
+  } | null>(null);
 
   const send = useCallback(
     async (label: string, action: () => Promise<`0x${string}`>) => {
@@ -41,7 +44,7 @@ export const useVaultActions = () => {
       try {
         const hash = await action();
         await ensClient.waitForTransactionReceipt({ hash });
-        setLastHash(hash);
+        setLast({ label, hash });
         refresh();
         return hash;
       } catch (cause) {
@@ -158,5 +161,8 @@ export const useVaultActions = () => {
     [getWalletClient, send],
   );
 
-  return { pending, error, lastHash, deposit, redeem, swap, faucet };
+  /** Clearing the result is what closes the success dialog. */
+  const dismiss = useCallback(() => setLast(null), []);
+
+  return { pending, error, last, dismiss, deposit, redeem, swap, faucet };
 };

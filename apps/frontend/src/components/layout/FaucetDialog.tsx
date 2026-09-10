@@ -4,6 +4,7 @@ import { DropIcon, XIcon } from "@phosphor-icons/react/dist/ssr";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { erc20Abi } from "viem";
 import { TokenIcon } from "@/components/ui/TokenIcon";
+import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
 import { ensClient } from "@/lib/ens/client";
 import { formatAmount } from "@/lib/format";
 import { isDeployed, TOKENS } from "@/lib/mock/tokens";
@@ -25,7 +26,8 @@ interface FaucetDialogProps {
 export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { address, isSepolia, epoch, connect } = useWallet();
-  const { faucet, pending, error } = useVaultActions();
+  const { faucet, pending, error, last, dismiss } = useVaultActions();
+  const [minted, setMinted] = useState<string | null>(null);
   const [balances, setBalances] = useState<
     Partial<Record<TokenSymbol, bigint>>
   >({});
@@ -139,7 +141,10 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
                   </span>
                   <button
                     type="button"
-                    onClick={() => faucet(token.address)}
+                    onClick={() => {
+                      setMinted(`1,000 m${token.symbol.toUpperCase()}`);
+                      faucet(token.address);
+                    }}
                     disabled={pending !== null}
                     className="shrink-0 rounded-full bg-accent px-3 py-1.5 text-xs font-medium text-ink-inverse transition-colors duration-150 ease-out hover:bg-accent-hover disabled:opacity-50"
                   >
@@ -170,6 +175,13 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
           </p>
         ) : null}
       </dialog>
+
+      <TxSuccessDialog
+        hash={last?.hash ?? null}
+        title="Test tokens minted"
+        detail={minted}
+        onDismiss={dismiss}
+      />
     </>
   );
 };
