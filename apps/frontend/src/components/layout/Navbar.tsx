@@ -1,23 +1,22 @@
 "use client";
 
 import {
-  EyeIcon,
-  EyeSlashIcon,
+  CaretDownIcon,
+  CheckIcon,
   SignOutIcon,
   WarningIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Notch } from "@/components/ui/notch";
 import { PRIMARY_NAV } from "@/config/navigation";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
-import { formatUsd, truncateAddress } from "@/lib/format";
+import { truncateAddress } from "@/lib/format";
 import { useWallet } from "@/lib/onchain/WalletProvider";
 import { FaucetDialog } from "./FaucetDialog";
-
-const MASKED_BALANCE = "••••••";
 
 const BAR_ICON =
   "rounded-full p-2 text-ink-muted transition-colors duration-150 ease-out hover:bg-surface-hover hover:text-ink";
@@ -39,9 +38,9 @@ const WalletControl = () => {
         href="https://metamask.io/download"
         target="_blank"
         rel="noreferrer"
-        className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-ink-inverse transition-colors duration-150 ease-out hover:bg-accent-hover"
+        className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-medium text-ink-inverse transition-colors duration-150 ease-out hover:bg-accent-hover"
       >
-        Install a wallet
+        Get a wallet
       </a>
     );
   }
@@ -52,9 +51,9 @@ const WalletControl = () => {
         type="button"
         onClick={connect}
         disabled={isConnecting}
-        className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-ink-inverse transition-colors duration-150 ease-out hover:bg-accent-hover disabled:opacity-60"
+        className="rounded-full bg-accent px-3.5 py-1.5 text-sm font-medium text-ink-inverse transition-colors duration-150 ease-out hover:bg-accent-hover disabled:opacity-60"
       >
-        {isConnecting ? "Connecting…" : "Connect wallet"}
+        {isConnecting ? "Connecting…" : "Connect"}
       </button>
     );
   }
@@ -64,116 +63,136 @@ const WalletControl = () => {
       <button
         type="button"
         onClick={switchNetwork}
-        className="flex items-center gap-2 rounded-full bg-negative px-4 py-2 text-sm font-medium text-ink-inverse transition-opacity duration-150 ease-out hover:opacity-90"
+        className="flex items-center gap-1.5 rounded-full bg-negative px-3 py-1.5 text-sm font-medium text-ink-inverse transition-opacity duration-150 ease-out hover:opacity-90"
       >
         <WarningIcon size={14} weight="fill" aria-hidden />
-        Switch to {SITE.network}
+        {SITE.network}
       </button>
     );
   }
 
   return (
-    <span className="flex items-center gap-1 rounded-full border border-line bg-surface-subtle py-1 pr-1 pl-1.5">
-      <span className="size-6 rounded-full bg-accent" aria-hidden />
-      <span className="text-sm font-medium text-ink">
+    <span className="flex items-center gap-1.5">
+      <span className="size-7 shrink-0 rounded-full bg-accent" aria-hidden />
+      <span className="hidden font-mono text-sm font-medium text-ink sm:block">
         {truncateAddress(address)}
-      </span>
-      <span className="hidden rounded-full bg-surface-hover px-1.5 py-0.5 text-[10px] font-medium text-ink-muted sm:block">
-        {SITE.network}
       </span>
       <button
         type="button"
         onClick={disconnect}
         title="Disconnect wallet"
-        className="rounded-full p-1.5 text-ink-subtle transition-colors duration-150 ease-out hover:bg-surface-hover hover:text-negative"
+        className={cn(BAR_ICON, "hover:text-negative")}
       >
-        <SignOutIcon size={14} weight="bold" aria-hidden />
+        <SignOutIcon size={15} weight="bold" aria-hidden />
         <span className="sr-only">Disconnect wallet</span>
       </button>
     </span>
   );
 };
 
-interface NavbarProps {
-  totalValueUsd: number;
-}
-
-export const Navbar = ({ totalValueUsd }: NavbarProps) => {
+export const Navbar = () => {
   const pathname = usePathname();
-  const [isBalanceVisible, setIsBalanceVisible] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const BalanceIcon = isBalanceVisible ? EyeIcon : EyeSlashIcon;
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(`${href}/`);
 
+  const active = PRIMARY_NAV.find((item) => isActive(item.href));
+  const ActiveIcon = active?.icon;
+
+  /** A tap outside is the only dismissal — the trigger lives inside the notch. */
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const close = (event: globalThis.MouseEvent) => {
+      if (!menuRef.current?.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, [isMenuOpen]);
+
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4 pb-2 lg:px-8">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-2 rounded-full border border-canvas/60 bg-surface/72 px-2 shadow-glass backdrop-blur-xl">
-        <Link
-          href="/explore"
-          className="flex shrink-0 items-center gap-2 rounded-full pr-2 pl-1"
-        >
-          <Image
-            src="/assets/logo-airindex.png"
-            alt=""
-            width={28}
-            height={28}
-            priority
-            className="size-7 rounded-md"
-          />
-          <span className="hidden text-sm font-semibold tracking-tight text-ink sm:block">
-            {SITE.name}
-          </span>
-        </Link>
-
-        {/* Scrolls rather than wrapping: the bar has to stay one pill at every width. */}
-        <nav
-          aria-label="Primary"
-          className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
-        >
-          {PRIMARY_NAV.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isActive(item.href) ? "page" : undefined}
-              className={cn(
-                "shrink-0 rounded-full px-3.5 py-2 text-sm transition-colors duration-150 ease-out",
-                isActive(item.href)
-                  ? "bg-surface-hover font-semibold text-ink"
-                  : "font-medium text-ink-muted hover:text-ink",
-              )}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <p className="hidden items-center gap-2 rounded-full bg-surface-subtle px-3 py-1.5 lg:flex">
-            <span className="text-xs text-ink-subtle">Total</span>
-            <span className="text-sm font-semibold tabular-nums text-ink">
-              {isBalanceVisible ? formatUsd(totalValueUsd) : MASKED_BALANCE}
+    <header className="sticky top-0 z-40 flex justify-center px-8">
+      <div ref={menuRef} className="relative">
+        <Notch className="h-12 gap-2 px-3">
+          <Link href="/explore" className="flex shrink-0 items-center gap-2">
+            <Image
+              src="/assets/logo-airindex.png"
+              alt=""
+              width={26}
+              height={26}
+              priority
+              className="size-[26px] rounded-md"
+            />
+            <span className="hidden text-sm font-semibold tracking-tight text-ink sm:block">
+              {SITE.name}
             </span>
-          </p>
+          </Link>
+
+          <span aria-hidden className="h-5 w-px shrink-0 bg-line" />
 
           <button
             type="button"
-            onClick={() => setIsBalanceVisible((visible) => !visible)}
-            aria-pressed={!isBalanceVisible}
-            className={cn(BAR_ICON, "hidden lg:block")}
+            onClick={() => setIsMenuOpen((open) => !open)}
+            aria-expanded={isMenuOpen}
+            aria-haspopup="menu"
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-semibold text-ink transition-colors duration-150 ease-out hover:bg-surface-hover"
           >
-            <BalanceIcon size={16} aria-hidden />
-            <span className="sr-only">
-              {isBalanceVisible
-                ? "Hide portfolio value"
-                : "Show portfolio value"}
-            </span>
+            {ActiveIcon ? (
+              <ActiveIcon size={16} aria-hidden className="text-ink-muted" />
+            ) : null}
+            {active?.label ?? "Menu"}
+            <CaretDownIcon
+              size={12}
+              weight="bold"
+              aria-hidden
+              className={cn(
+                "text-ink-subtle transition-transform duration-150 ease-out",
+                isMenuOpen && "rotate-180",
+              )}
+            />
           </button>
+
+          <span aria-hidden className="h-5 w-px shrink-0 bg-line" />
 
           <FaucetDialog triggerClassName={BAR_ICON} />
 
           <WalletControl />
-        </div>
+        </Notch>
+
+        {isMenuOpen ? (
+          <nav
+            aria-label="Primary"
+            className="absolute top-full left-1/2 mt-2 flex w-56 -translate-x-1/2 flex-col gap-0.5 rounded-2xl border border-line bg-surface p-1.5 shadow-floating"
+          >
+            {PRIMARY_NAV.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => setIsMenuOpen(false)}
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-colors duration-150 ease-out",
+                  isActive(item.href)
+                    ? "bg-ink font-semibold text-ink-inverse"
+                    : "font-medium text-ink-muted hover:bg-surface-hover hover:text-ink",
+                )}
+              >
+                <item.icon size={16} aria-hidden />
+                <span className="flex-1">{item.label}</span>
+                {isActive(item.href) ? (
+                  <CheckIcon size={13} weight="bold" aria-hidden />
+                ) : null}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
       </div>
     </header>
   );
