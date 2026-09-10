@@ -17,6 +17,7 @@
     "wire-index": "tsx scripts/wire-index.ts",
     "publish-agent": "tsx scripts/publish-agent.ts",
     "check:onchain": "tsx scripts/check-onchain.ts",
+    "prove": "tsx scripts/prove.ts",
     "probe:w3": "tsx scripts/probe-w3.ts",
     "rebalance": "tsx scripts/rebalance.ts",
     "set-alias": "tsx scripts/set-alias.ts",

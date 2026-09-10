@@ -479,6 +479,7 @@ fetchLiveIndexes()                        — every published index, with the sh
 - [x] 14 mock ERC20s with an in-app faucet
 - [x] Deposit / redeem / swap against live contracts, with animated confirmations
 - [x] Two runnable gates (`check:ens`, `check:onchain`) plus three probes
+- [x] `pnpm prove` — 17 assertions covering every claim on this page, read live
 - [x] Live demo deployed — [air-index-ens.vercel.app](https://air-index-ens.vercel.app)
 - [ ] Demo video
 - [ ] `/indexes/<alias>` falls back to the chain when a slug is absent from the local catalogue
