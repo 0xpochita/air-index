@@ -1,20 +1,21 @@
+"use client";
+
 import { AllocationCard } from "@/components/portfolio/AllocationCard";
-import { getPortfolioPositions } from "@/lib/mock/indexes";
+import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import {
   getPortfolioAllocation,
-  getPortfolioValueUsd,
   getWeightedDayChangePct,
 } from "@/lib/portfolio";
 import { PortfolioHero } from "./components/PortfolioHero";
 import { PositionList } from "./components/PositionList";
 
 export const DashboardPage = () => {
-  const positions = getPortfolioPositions();
+  const { positions, totalValueUsd } = usePortfolio();
 
   return (
     <div className="space-y-6">
       <PortfolioHero
-        totalValueUsd={getPortfolioValueUsd(positions)}
+        totalValueUsd={totalValueUsd}
         dayChangePct={getWeightedDayChangePct(positions)}
         indexCount={positions.length}
       />

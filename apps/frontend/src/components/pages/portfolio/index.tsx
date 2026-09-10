@@ -1,17 +1,18 @@
+"use client";
+
 import { AllocationCard } from "@/components/portfolio/AllocationCard";
 import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getPortfolioPositions } from "@/lib/mock/indexes";
+import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import {
   getPortfolioAllocation,
-  getPortfolioValueUsd,
   getWeightedDayChangePct,
 } from "@/lib/portfolio";
 import { HoldingsTable } from "./components/HoldingsTable";
 import { PortfolioCover } from "./components/PortfolioCover";
 
 export const PortfolioPage = () => {
-  const positions = getPortfolioPositions();
+  const { positions, totalValueUsd } = usePortfolio();
 
   return (
     <div className="space-y-6">
@@ -26,7 +27,7 @@ export const PortfolioPage = () => {
       />
 
       <PortfolioCover
-        totalValueUsd={getPortfolioValueUsd(positions)}
+        totalValueUsd={totalValueUsd}
         dayChangePct={getWeightedDayChangePct(positions)}
         holdingCount={positions.length}
       />

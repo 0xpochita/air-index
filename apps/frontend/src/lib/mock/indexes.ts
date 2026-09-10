@@ -2,7 +2,6 @@ import type {
   Constituent,
   IndexCollection,
   IndexFund,
-  PortfolioPosition,
   TokenSymbol,
 } from "@/types/index-fund";
 import { getToken } from "./tokens";
@@ -338,12 +337,3 @@ export const getCollections = (): IndexCollection[] => [
     indexes: pickIndexes(["majors-pair", "ai-compute", "l2-basket"]),
   },
 ];
-
-export const getPortfolioPositions = (): PortfolioPosition[] =>
-  pickIndexes(["big-five", "defi-blue", "safe-stables"]).map(
-    (fund, position) => ({
-      index: fund,
-      valueUsd: [4_182.55, 1_930.14, 812.4][position],
-      dayChangePct: fund.dayReturnPct,
-    }),
-  );

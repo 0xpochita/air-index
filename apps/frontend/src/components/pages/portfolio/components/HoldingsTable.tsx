@@ -65,7 +65,10 @@ export const HoldingsTable = ({ positions }: HoldingsTableProps) => {
           </thead>
           <tbody>
             {positions.map((position) => {
-              const unitPriceUsd = getUnitPriceUsd(position.index);
+              const unitPriceUsd =
+                position.units > 0
+                  ? position.valueUsd / position.units
+                  : getUnitPriceUsd(position.index);
               const shareBps =
                 (position.valueUsd / totalValueUsd) * BASIS_POINTS_PER_UNIT;
 
@@ -95,7 +98,7 @@ export const HoldingsTable = ({ positions }: HoldingsTableProps) => {
                     </Link>
                   </td>
                   <td className="px-5 py-4 text-right text-sm tabular-nums text-ink-muted">
-                    {formatAmount(position.valueUsd / unitPriceUsd)}
+                    {formatAmount(position.units)}
                   </td>
                   <td className="px-5 py-4 text-right text-sm tabular-nums text-ink-muted">
                     {formatUsd(unitPriceUsd)}

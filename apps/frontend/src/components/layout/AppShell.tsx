@@ -1,5 +1,7 @@
+"use client";
+
 import type { ReactNode } from "react";
-import { getPortfolioPositions } from "@/lib/mock/indexes";
+import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import { Sidebar } from "./Sidebar";
 import { Topbar } from "./Topbar";
 
@@ -8,11 +10,7 @@ interface AppShellProps {
 }
 
 export const AppShell = ({ children }: AppShellProps) => {
-  const positions = getPortfolioPositions();
-  const totalValueUsd = positions.reduce(
-    (total, position) => total + position.valueUsd,
-    0,
-  );
+  const { positions, totalValueUsd } = usePortfolio();
 
   return (
     <div className="grid min-h-dvh grid-cols-1 lg:grid-cols-[16rem_1fr]">
