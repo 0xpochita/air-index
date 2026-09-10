@@ -15,6 +15,8 @@ import { getIndexBySlug } from "../src/lib/mock/indexes";
 import { getWallet, logTx, requireFunds } from "./lib/wallet";
 
 const SLUG = process.argv[2] ?? "defi-blue";
+/** Omitting CAN_TRANSFER_ADMIN at registration makes the entry permanently soulbound. */
+const IS_SOULBOUND = process.argv.includes("--soulbound");
 const ONE_YEAR_SECONDS = 31_536_000n;
 const WEIGHT_KEY = "weight";
 const CONSTITUENTS_KEY = "constituents";
@@ -40,11 +42,15 @@ const INDEX_RESOLVER_ROLES =
   withAdmin(RESOLVER_ROLE.CLEAR) |
   withAdmin(RESOLVER_ROLE.UPGRADE);
 
-/** The index itself is transferable, so CAN_TRANSFER_ADMIN is granted at registration. */
-const INDEX_ROLES =
+/**
+ * CAN_TRANSFER_ADMIN has no regular variant and cannot be added later, so this
+ * is the only moment the choice exists. Without it the index is soulbound: the
+ * creator keeps it or nobody does.
+ */
+const indexRoles = (transferable: boolean) =>
   withAdmin(REGISTRY_ROLE.SET_RESOLVER) |
   withAdmin(REGISTRY_ROLE.SET_SUBREGISTRY) |
-  REGISTRY_ROLE.CAN_TRANSFER_ADMIN;
+  (transferable ? REGISTRY_ROLE.CAN_TRANSFER_ADMIN : 0n);
 
 const requireEnvAddress = (key: string): `0x${string}` => {
   const value = process.env[key];
@@ -97,7 +103,9 @@ const run = async () => {
   const indexResolver = proxyEvent.args.proxyAddress as `0x${string}`;
   console.log(`  resolver ${indexResolver}`);
 
-  console.log(`\n2. register ${SLUG} in the air index registry`);
+  console.log(
+    `\n2. register ${SLUG} in the air index registry${IS_SOULBOUND ? " as soulbound" : ""}`,
+  );
   const expiry = BigInt(Math.floor(Date.now() / 1000)) + ONE_YEAR_SECONDS;
   await logTx(
     "register",
@@ -110,7 +118,7 @@ const run = async () => {
         account.address,
         ZERO_ADDRESS,
         indexResolver,
-        INDEX_ROLES,
+        indexRoles(!IS_SOULBOUND),
         expiry,
       ],
     }),

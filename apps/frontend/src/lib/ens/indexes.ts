@@ -16,6 +16,7 @@ import {
   readIndexText,
   readMethodologyLock,
 } from "./read";
+import { isTransferable } from "./roles";
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 
@@ -45,6 +46,8 @@ export interface OnchainIndex {
   /** `addr(60)` on the index name itself: the share token it settles in. */
   shareToken: `0x${string}` | null;
   agent: OnchainAgent | null;
+  /** False when the entry was registered without CAN_TRANSFER_ADMIN. */
+  isTransferable: boolean;
 }
 
 /**
@@ -81,7 +84,7 @@ export const fetchOnchainIndex = async (
 
   const ensName = `${slug}.${PROTOCOL_ROOT}`;
 
-  const [resolver, owner, expiry] = await Promise.all([
+  const [resolver, owner, expiry, tokenRoles] = await Promise.all([
     ensClient.readContract({
       address: registry,
       abi: permissionedRegistryAbi,
@@ -100,7 +103,23 @@ export const fetchOnchainIndex = async (
       functionName: "findExpiry",
       args: [slug],
     }),
-  ]).catch(() => [ZERO_ADDRESS, ZERO_ADDRESS, 0n] as const);
+    ensClient
+      .readContract({
+        address: registry,
+        abi: permissionedRegistryAbi,
+        functionName: "findTokenId",
+        args: [slug],
+      })
+      .then((tokenId) =>
+        ensClient.readContract({
+          address: registry,
+          abi: permissionedRegistryAbi,
+          functionName: "roleCount",
+          args: [tokenId as bigint],
+        }),
+      )
+      .catch(() => 0n),
+  ]).catch(() => [ZERO_ADDRESS, ZERO_ADDRESS, 0n, 0n] as const);
 
   if (resolver === ZERO_ADDRESS || owner === ZERO_ADDRESS) {
     return null;
@@ -152,6 +171,7 @@ export const fetchOnchainIndex = async (
     isMethodologyLocked,
     shareToken: shareToken === ZERO_ADDRESS ? null : shareToken,
     agent,
+    isTransferable: isTransferable(tokenRoles as bigint),
     isVerifiedResolver:
       provenance.toLowerCase() ===
       ENS_DEPLOYMENT.permissionedResolverImpl.toLowerCase(),

@@ -73,3 +73,11 @@ export const isMethodologyLocked = (rootRoleCounts: bigint): boolean =>
       getAssigneeCount(rootRoleCounts, role) === 0 &&
       getAssigneeCount(rootRoleCounts, role << ADMIN_SHIFT) === 0,
   );
+
+/**
+ * An entry is transferable only while somebody holds CAN_TRANSFER_ADMIN on its
+ * token. The role has no regular variant and cannot be granted after
+ * registration, so this reads as a permanent property of the entry.
+ */
+export const isTransferable = (tokenRoleCounts: bigint): boolean =>
+  getAssigneeCount(tokenRoleCounts, REGISTRY_ROLE.CAN_TRANSFER_ADMIN) > 0;
