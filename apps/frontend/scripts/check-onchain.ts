@@ -44,6 +44,12 @@ const run = async () => {
     console.log(
       `  agent      ${index.agent ? `${index.agent.address} scoped to "${index.agent.delegatedKey}"` : "none"}`,
     );
+    console.log(
+      `  transfer   ${index.isTransferable ? "transferable" : "soulbound"}`,
+    );
+    console.log(
+      `  expires    ${new Date(Number(index.expiry) * 1000).toISOString().slice(0, 10)}`,
+    );
     console.log(`  desc       ${index.description}`);
 
     for (const constituent of index.constituents) {

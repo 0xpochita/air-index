@@ -1,5 +1,6 @@
 import {
   BroadcastIcon,
+  LinkSimpleIcon,
   LockSimpleIcon,
   SealCheckIcon,
 } from "@phosphor-icons/react/dist/ssr";
@@ -58,6 +59,25 @@ export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
           ) : (
             <span className="text-ink-muted">Not published</span>
           )}
+        </dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Ownership</dt>
+        <dd>
+          {onchain.isTransferable ? (
+            <span className="text-xs text-ink-muted">Transferable</span>
+          ) : (
+            <Badge tone="accent">
+              <LinkSimpleIcon size={12} weight="bold" aria-hidden />
+              Soulbound
+            </Badge>
+          )}
+        </dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Expires</dt>
+        <dd className="tabular-nums text-xs text-ink">
+          {new Date(Number(onchain.expiry) * 1000).toLocaleDateString("en-CA")}
         </dd>
       </div>
       <div className="flex items-center justify-between gap-4">
