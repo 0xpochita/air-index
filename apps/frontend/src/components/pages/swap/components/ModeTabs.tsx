@@ -18,7 +18,7 @@ export const ModeTabs = ({ mode, onModeChange }: ModeTabsProps) => (
   <div
     role="tablist"
     aria-label="Swap mode"
-    className="flex gap-6 border-b border-line"
+    className="mx-auto flex w-fit items-center gap-1 rounded-full bg-surface-subtle p-1"
   >
     {SWAP_MODES.map((value) => (
       <button
@@ -28,10 +28,10 @@ export const ModeTabs = ({ mode, onModeChange }: ModeTabsProps) => (
         aria-selected={mode === value}
         onClick={() => onModeChange(value)}
         className={cn(
-          "-mb-px border-b-2 pb-3 text-sm font-medium transition-colors duration-150 ease-out",
+          "rounded-full px-4 py-1.5 text-sm transition-colors duration-150 ease-out",
           mode === value
-            ? "border-ink text-ink"
-            : "border-transparent text-ink-subtle hover:text-ink",
+            ? "bg-surface font-semibold text-ink shadow-raised"
+            : "font-medium text-ink-subtle hover:text-ink",
         )}
       >
         {MODE_LABEL[value]}

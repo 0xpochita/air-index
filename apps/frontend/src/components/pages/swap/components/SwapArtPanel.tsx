@@ -3,7 +3,7 @@ import Image from "next/image";
 const IMAGE_QUALITY = 90;
 
 export const SwapArtPanel = () => (
-  <aside className="relative isolate hidden min-h-112 overflow-hidden rounded-xl border border-canvas/70 shadow-glass lg:block">
+  <aside className="relative isolate hidden min-h-112 overflow-hidden rounded-2xl shadow-glass lg:block">
     <Image
       src="/assets/cat-ui-bg.jpg"
       alt=""

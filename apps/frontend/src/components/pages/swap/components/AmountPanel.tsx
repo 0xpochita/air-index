@@ -26,33 +26,16 @@ export const AmountPanel = ({
   const isEditable = onValueChange !== undefined && inputId !== undefined;
 
   return (
-    <div className="rounded-lg bg-surface-subtle px-4 py-3.5">
-      <div className="flex items-center justify-between gap-4">
-        {isEditable ? (
-          <label htmlFor={inputId} className="text-xs text-ink-subtle">
-            {label}
-          </label>
-        ) : (
-          <span className="text-xs text-ink-subtle">{label}</span>
-        )}
+    <div className="rounded-2xl bg-surface p-5 shadow-raised">
+      {isEditable ? (
+        <label htmlFor={inputId} className="text-sm text-ink-subtle">
+          {label}
+        </label>
+      ) : (
+        <span className="text-sm text-ink-subtle">{label}</span>
+      )}
 
-        <span className="flex items-center gap-2 text-xs text-ink-subtle">
-          <span className="tabular-nums">
-            {`${formatAmount(side.balance)} ${side.symbol}`}
-          </span>
-          {onMax ? (
-            <button
-              type="button"
-              onClick={onMax}
-              className="font-semibold text-accent transition-colors duration-150 ease-out hover:text-accent-hover"
-            >
-              Max
-            </button>
-          ) : null}
-        </span>
-      </div>
-
-      <div className="mt-1.5 flex items-center justify-between gap-4">
+      <div className="mt-2 flex items-center justify-between gap-3">
         {isEditable ? (
           <input
             id={inputId}
@@ -61,12 +44,12 @@ export const AmountPanel = ({
             inputMode="decimal"
             autoComplete="off"
             placeholder="0"
-            className="w-full min-w-0 bg-transparent text-2xl font-medium tabular-nums text-ink outline-none placeholder:text-ink-subtle"
+            className="w-full min-w-0 bg-transparent text-[2.25rem] leading-none font-medium tracking-tight tabular-nums text-ink outline-none placeholder:text-ink-subtle"
           />
         ) : (
           <output
             htmlFor={inputId}
-            className="w-full min-w-0 truncate text-2xl font-medium tabular-nums text-ink"
+            className="w-full min-w-0 truncate text-[2.25rem] leading-none font-medium tracking-tight tabular-nums text-ink"
           >
             {side.amount > 0 ? formatAmount(side.amount) : "0"}
           </output>
@@ -74,9 +57,26 @@ export const AmountPanel = ({
         {assetControl}
       </div>
 
-      <p className="mt-0.5 text-xs tabular-nums text-ink-subtle">
-        {formatUsd(side.valueUsd)}
-      </p>
+      <div className="mt-3 flex items-center justify-between gap-4 text-xs">
+        <span className="tabular-nums text-ink-subtle">
+          {formatUsd(side.valueUsd)}
+        </span>
+
+        <span className="flex items-center gap-2 text-ink-subtle">
+          <span className="tabular-nums">
+            {`You have ${formatAmount(side.balance)}`}
+          </span>
+          {onMax ? (
+            <button
+              type="button"
+              onClick={onMax}
+              className="rounded-md bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold tracking-wide uppercase text-accent transition-colors duration-150 ease-out hover:bg-accent hover:text-ink-inverse"
+            >
+              Max
+            </button>
+          ) : null}
+        </span>
+      </div>
     </div>
   );
 };

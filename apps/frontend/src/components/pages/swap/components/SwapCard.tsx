@@ -1,10 +1,8 @@
 "use client";
 
-import { ArrowDownIcon } from "@phosphor-icons/react/dist/ssr";
+import { ArrowsDownUpIcon } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 import { useState } from "react";
-import { Button } from "@/components/ui/Button";
-import { ReturnValue } from "@/components/ui/ReturnValue";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
@@ -19,10 +17,29 @@ import { useSwapForm } from "../hooks/useSwapForm";
 import { AmountPanel } from "./AmountPanel";
 import { AssetChip, AssetSelect } from "./AssetSelect";
 import { ModeTabs } from "./ModeTabs";
+import { SwapConfirmDialog } from "./SwapConfirmDialog";
 import { SwapSummary } from "./SwapSummary";
 
 const PAY_INPUT_ID = "swap-pay-amount";
 const RECEIVE_OUTPUT_ID = "swap-receive-amount";
+
+const MODE_PAY_LABEL: Record<SwapMode, string> = {
+  deposit: "Pay",
+  swap: "Swap",
+  redeem: "Redeem",
+};
+
+const MODE_ACTION: Record<SwapMode, string> = {
+  deposit: "Deposit",
+  swap: "Swap",
+  redeem: "Redeem",
+};
+
+const CONFIRM_TITLE: Record<SwapMode, string> = {
+  deposit: "Confirm deposit",
+  swap: "Confirm swap",
+  redeem: "Confirm redemption",
+};
 
 const SUCCESS_TITLE: Record<string, string> = {
   deposit: "Deposit confirmed",
@@ -35,25 +52,27 @@ const ensLabel = (name: string) => (
   <span className="font-mono text-[13px] font-medium">{name}</span>
 );
 
-const MODE_PAY_LABEL: Record<SwapMode, string> = {
-  deposit: "You pay",
-  swap: "You swap",
-  redeem: "You redeem",
-};
-
-const MODE_ACTION: Record<SwapMode, string> = {
-  deposit: "Deposit",
-  swap: "Swap",
-  redeem: "Redeem",
-};
+interface Leg {
+  amount: number;
+  symbol: string;
+  valueUsd: number;
+}
 
 /**
- * What the transaction produced, captured on click. Reading the form when the
- * dialog renders would let an edit made mid-flight rewrite the receipt.
+ * A snapshot of the trade, taken when the confirm dialog opens. The form behind
+ * the dialog stays mounted, so reading it at confirm time would let a late edit
+ * change what the user agreed to.
  */
-type Receipt =
-  | { kind: "index"; summary: string; live: LiveIndex }
-  | { kind: "token"; summary: string; token: Token };
+interface Pending {
+  mode: SwapMode;
+  amountWei: bigint;
+  pay: Leg;
+  receive: Leg;
+  target: LiveIndex;
+  vault: `0x${string}`;
+  targetVault: `0x${string}`;
+  unitPriceUsd: number;
+}
 
 interface SwapCardProps {
   live: LiveIndex;
@@ -68,11 +87,14 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
 
   const others = liveIndexes.filter((entry) => entry.slug !== live.slug);
   const [alternateSlug, setAlternateSlug] = useState(others[0]?.slug ?? "");
-  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const alternate =
     others.find((entry) => entry.slug === alternateSlug) ?? others[0];
 
+  const [pending, setPending] = useState<Pending | null>(null);
+  const [faucetToken, setFaucetToken] = useState<Token | null>(null);
+
   const form = useSwapForm({ live, alternate });
+
   const indexIcon = (
     <TokenStack
       constituents={live.fund.constituents}
@@ -87,11 +109,6 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       label={form.quoteSymbol}
     />
   );
-  /**
-   * The name is the product, so the chip carries it rather than the ticker.
-   * Tickers stay in the rate line and the balance row, where a long name would
-   * push the numbers off screen.
-   */
   const indexChip = (
     <AssetChip icon={indexIcon} label={ensLabel(live.ensName)} />
   );
@@ -130,40 +147,54 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
     redeem: quoteChip,
   };
 
-  const submit = () => {
+  const openConfirm = () => {
     if (!live.vault) {
       return;
     }
 
-    /** The receipt always names what landed in the wallet, never what left it. */
-    const summary = `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`;
+    const target = form.mode === "swap" && alternate ? alternate : live;
 
-    setReceipt(
-      form.mode === "redeem"
-        ? { kind: "token", summary, token: form.quote }
-        : {
-            kind: "index",
-            summary,
-            live: form.mode === "swap" && alternate ? alternate : live,
-          },
-    );
+    setPending({
+      mode: form.mode,
+      amountWei: form.payAmountWei,
+      pay: {
+        amount: form.payment.amount,
+        symbol: form.payment.symbol,
+        valueUsd: form.payment.valueUsd,
+      },
+      receive: {
+        amount: form.receipt.amount,
+        symbol: form.receipt.symbol,
+        valueUsd: form.receipt.valueUsd,
+      },
+      target,
+      vault: live.vault,
+      targetVault: target.vault ?? live.vault,
+      unitPriceUsd: form.unitPriceUsd,
+    });
+  };
 
-    if (form.mode === "deposit") {
-      actions.deposit(live.vault, form.payAmountWei);
+  const runPending = () => {
+    if (!pending) {
       return;
     }
 
-    if (form.mode === "redeem") {
-      actions.redeem(live.vault, form.payAmountWei);
+    if (pending.mode === "deposit") {
+      actions.deposit(pending.vault, pending.amountWei);
       return;
     }
 
-    if (alternate?.vault) {
-      actions.swap(live.vault, alternate.vault, form.payAmountWei);
+    if (pending.mode === "redeem") {
+      actions.redeem(pending.vault, pending.amountWei);
+      return;
     }
+
+    actions.swap(pending.vault, pending.targetVault, pending.amountWei);
   };
 
   const isBusy = actions.pending !== null;
+  /** Deposit and redeem are the same trade in opposite directions; swap is not. */
+  const canFlip = form.mode !== "swap";
 
   const primary = (() => {
     if (!hasProvider || !address) {
@@ -177,42 +208,64 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       };
     }
     if (isBusy) {
-      return { label: `${actions.pending}…`, onClick: submit, disabled: true };
+      return {
+        label: `${actions.pending}…`,
+        onClick: openConfirm,
+        disabled: true,
+      };
     }
     if (!form.hasAmount) {
-      return { label: "Enter amount", onClick: submit, disabled: true };
+      return { label: "Enter amount", onClick: openConfirm, disabled: true };
     }
     if (form.isOverBalance) {
-      return { label: "Insufficient balance", onClick: submit, disabled: true };
+      return {
+        label: "Insufficient balance",
+        onClick: openConfirm,
+        disabled: true,
+      };
     }
     if (form.mode === "swap" && !alternate?.vault) {
-      return { label: "No other index live", onClick: submit, disabled: true };
+      return {
+        label: "No other index live",
+        onClick: openConfirm,
+        disabled: true,
+      };
     }
-    return { label: MODE_ACTION[form.mode], onClick: submit, disabled: false };
+    return {
+      label: MODE_ACTION[form.mode],
+      onClick: openConfirm,
+      disabled: false,
+    };
   })();
 
+  const isFaucetReceipt = actions.last?.label === "faucet";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <ModeTabs mode={form.mode} onModeChange={form.changeMode} />
 
-      <header className="flex items-baseline justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="truncate text-base font-semibold text-ink">
-            {live.fund.name}
-          </h1>
-          <p className="truncate font-mono text-xs text-ink-subtle">
-            {live.ensName}
-          </p>
+      <header className="flex items-center justify-between gap-4 px-1">
+        <div className="flex min-w-0 items-center gap-3">
+          <TokenStack
+            constituents={live.fund.constituents}
+            size="md"
+            maxVisible={3}
+          />
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-semibold text-ink">
+              {live.fund.name}
+            </h1>
+            <p className="truncate font-mono text-xs text-ink-subtle">
+              {live.ensName}
+            </p>
+          </div>
         </div>
-        <div className="flex shrink-0 items-baseline gap-3">
-          <span className="text-base font-semibold tabular-nums text-ink">
-            {formatUsd(form.unitPriceUsd)}
-          </span>
-          <ReturnValue value={live.fund.allTimeReturnPct} className="text-xs" />
-        </div>
+        <span className="shrink-0 text-base font-semibold tabular-nums text-ink">
+          {formatUsd(form.unitPriceUsd)}
+        </span>
       </header>
 
-      <div className="relative space-y-1">
+      <div className="relative space-y-2">
         <AmountPanel
           label={MODE_PAY_LABEL[form.mode]}
           side={form.payment}
@@ -222,14 +275,32 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           onValueChange={form.changeAmount}
           onMax={form.setMaxAmount}
         />
-        <span
-          aria-hidden
-          className="absolute top-1/2 left-1/2 flex size-7 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-canvas/70 bg-surface/90 backdrop-blur-sm"
-        >
-          <ArrowDownIcon size={13} weight="bold" className="text-ink-muted" />
+
+        <span className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+          {canFlip ? (
+            <button
+              type="button"
+              onClick={() =>
+                form.changeMode(form.mode === "deposit" ? "redeem" : "deposit")
+              }
+              title="Reverse direction"
+              className="flex size-10 items-center justify-center rounded-full border-4 border-surface-subtle bg-surface text-ink-muted shadow-raised transition-colors duration-150 ease-out hover:text-ink"
+            >
+              <ArrowsDownUpIcon size={15} weight="bold" aria-hidden />
+              <span className="sr-only">Reverse direction</span>
+            </button>
+          ) : (
+            <span
+              aria-hidden
+              className="flex size-10 items-center justify-center rounded-full border-4 border-surface-subtle bg-surface text-ink-subtle shadow-raised"
+            >
+              <ArrowsDownUpIcon size={15} weight="bold" />
+            </span>
+          )}
         </span>
+
         <AmountPanel
-          label="You receive"
+          label="Receive"
           side={form.receipt}
           assetControl={receiveControlByMode[form.mode]}
           inputId={RECEIVE_OUTPUT_ID}
@@ -245,24 +316,21 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       />
 
       <div className="space-y-3">
-        <Button
+        <button
+          type="button"
           onClick={primary.onClick}
           disabled={primary.disabled}
-          className="w-full py-3"
+          className="swap-cta w-full rounded-full py-3.5 text-sm font-semibold text-ink-inverse disabled:opacity-45"
         >
           {primary.label}
-        </Button>
+        </button>
 
         {address && isSepolia ? (
-          <div className="flex items-center justify-between gap-4 text-xs">
+          <div className="flex items-center justify-between gap-4 px-1 text-xs">
             <button
               type="button"
               onClick={() => {
-                setReceipt({
-                  kind: "token",
-                  summary: `1,000 ${form.quoteSymbol}`,
-                  token: form.quote,
-                });
+                setFaucetToken(form.quote);
                 actions.faucet(form.quote.address);
               }}
               disabled={isBusy}
@@ -276,10 +344,61 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           </div>
         ) : null}
 
-        {actions.error ? (
-          <p className="text-xs text-negative">{actions.error}</p>
+        {actions.error && pending === null ? (
+          <p className="px-1 text-xs text-negative">{actions.error}</p>
         ) : null}
       </div>
+
+      {pending ? (
+        <SwapConfirmDialog
+          isOpen={actions.last === null}
+          title={CONFIRM_TITLE[pending.mode]}
+          confirmLabel={MODE_ACTION[pending.mode]}
+          pay={{
+            ...pending.pay,
+            icon:
+              pending.mode === "deposit" ? (
+                <TokenIcon token={form.quote} size="lg" />
+              ) : (
+                <TokenStack
+                  constituents={live.fund.constituents}
+                  size="md"
+                  maxVisible={3}
+                />
+              ),
+          }}
+          receive={{
+            ...pending.receive,
+            icon:
+              pending.mode === "redeem" ? (
+                <TokenIcon token={form.quote} size="lg" />
+              ) : (
+                <TokenStack
+                  constituents={pending.target.fund.constituents}
+                  size="md"
+                  maxVisible={3}
+                />
+              ),
+          }}
+          index={{
+            name: pending.target.fund.name,
+            ensName: pending.target.ensName,
+            icon: (
+              <TokenStack
+                constituents={pending.target.fund.constituents}
+                size="md"
+                maxVisible={3}
+              />
+            ),
+          }}
+          unitPriceUsd={pending.unitPriceUsd}
+          vault={pending.targetVault}
+          isPending={isBusy}
+          error={actions.error}
+          onConfirm={runPending}
+          onClose={() => setPending(null)}
+        />
+      ) : null}
 
       <TxSuccessDialog
         hash={actions.last?.hash ?? null}
@@ -287,19 +406,28 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           SUCCESS_TITLE[actions.last?.label ?? ""] ?? "Transaction confirmed"
         }
         icon={
-          receipt?.kind === "token" ? (
-            <TokenIcon token={receipt.token} size="lg" />
+          isFaucetReceipt && faucetToken ? (
+            <TokenIcon token={faucetToken} size="lg" />
           ) : (
             <TokenStack
-              constituents={receipt?.live.fund.constituents ?? []}
+              constituents={pending?.target.fund.constituents ?? []}
               size="lg"
               maxVisible={4}
             />
           )
         }
-        ensName={receipt?.kind === "index" ? receipt.live.ensName : null}
-        detail={receipt?.summary}
-        onDismiss={actions.dismiss}
+        ensName={isFaucetReceipt ? null : (pending?.target.ensName ?? null)}
+        detail={
+          isFaucetReceipt && faucetToken
+            ? `1,000 m${faucetToken.symbol.toUpperCase()}`
+            : pending
+              ? `${formatAmount(pending.pay.amount)} ${pending.pay.symbol} → ${formatAmount(pending.receive.amount)} ${pending.receive.symbol}`
+              : null
+        }
+        onDismiss={() => {
+          actions.dismiss();
+          setPending(null);
+        }}
       />
     </div>
   );
