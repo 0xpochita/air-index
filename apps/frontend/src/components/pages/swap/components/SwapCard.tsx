@@ -7,7 +7,7 @@ import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
 import { SITE } from "@/config/site";
-import { formatAmount, formatUsd } from "@/lib/format";
+import { formatAmount, formatUsd, truncateAddress } from "@/lib/format";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import type { LiveIndex } from "@/lib/onchain/vaults";
@@ -65,6 +65,8 @@ interface Pending {
   amountWei: bigint;
   pay: Leg;
   receive: Leg;
+  /** The index paid from — the same as `target` unless this is a swap. */
+  source: LiveIndex;
   target: LiveIndex;
   vault: `0x${string}`;
   targetVault: `0x${string}`;
@@ -142,6 +144,30 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
     redeem: quoteChip,
   };
 
+  /**
+   * The asset on one side of a captured trade. Read from the snapshot rather
+   * than from the form, which stays editable behind the dialog.
+   */
+  const legIcon = (snapshot: Pending, side: "pay" | "receive") => {
+    const isQuoteSide =
+      (snapshot.mode === "deposit" && side === "pay") ||
+      (snapshot.mode === "redeem" && side === "receive");
+
+    if (isQuoteSide) {
+      return <TokenIcon token={form.quote} size="md" />;
+    }
+
+    return (
+      <TokenStack
+        constituents={
+          (side === "pay" ? snapshot.source : snapshot.target).constituents
+        }
+        size="md"
+        maxVisible={3}
+      />
+    );
+  };
+
   const openConfirm = () => {
     if (!live.vault) {
       return;
@@ -162,6 +188,7 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
         symbol: form.receipt.symbol,
         valueUsd: form.receipt.valueUsd,
       },
+      source: live,
       target,
       vault: live.vault,
       targetVault: target.vault ?? live.vault,
@@ -349,32 +376,8 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
           isOpen={actions.last === null}
           title={CONFIRM_TITLE[pending.mode]}
           confirmLabel={MODE_ACTION[pending.mode]}
-          pay={{
-            ...pending.pay,
-            icon:
-              pending.mode === "deposit" ? (
-                <TokenIcon token={form.quote} size="lg" />
-              ) : (
-                <TokenStack
-                  constituents={live.constituents}
-                  size="md"
-                  maxVisible={3}
-                />
-              ),
-          }}
-          receive={{
-            ...pending.receive,
-            icon:
-              pending.mode === "redeem" ? (
-                <TokenIcon token={form.quote} size="lg" />
-              ) : (
-                <TokenStack
-                  constituents={pending.target.constituents}
-                  size="md"
-                  maxVisible={3}
-                />
-              ),
-          }}
+          pay={{ ...pending.pay, icon: legIcon(pending, "pay") }}
+          receive={{ ...pending.receive, icon: legIcon(pending, "receive") }}
           index={{
             name: pending.target.name,
             ensName: pending.target.ensName,
@@ -391,7 +394,15 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
           isPending={isBusy}
           error={actions.error}
           onConfirm={runPending}
-          onClose={() => setPending(null)}
+          /**
+           * A confirmed transaction closes this dialog too, and that close must
+           * not discard the trade — the success dialog is still describing it.
+           */
+          onClose={() => {
+            if (actions.last === null) {
+              setPending(null);
+            }
+          }}
         />
       ) : null}
 
@@ -411,13 +422,51 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
             />
           )
         }
+        heading={isFaucetReceipt ? null : (pending?.target.name ?? null)}
         ensName={isFaucetReceipt ? null : (pending?.target.ensName ?? null)}
+        legs={
+          isFaucetReceipt || !pending
+            ? null
+            : {
+                pay: {
+                  icon: legIcon(pending, "pay"),
+                  amount: formatAmount(pending.pay.amount),
+                  symbol: pending.pay.symbol,
+                },
+                receive: {
+                  icon: legIcon(pending, "receive"),
+                  amount: formatAmount(pending.receive.amount),
+                  symbol: pending.receive.symbol,
+                },
+              }
+        }
+        rows={
+          isFaucetReceipt || !pending
+            ? undefined
+            : [
+                {
+                  label: "Share price",
+                  value: (
+                    <span className="tabular-nums">
+                      {formatUsd(pending.unitPriceUsd)}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Settled in",
+                  value: (
+                    <span className="font-mono">
+                      {truncateAddress(pending.targetVault)}
+                    </span>
+                  ),
+                },
+                { label: "Network", value: SITE.network },
+              ]
+        }
         detail={
           isFaucetReceipt && faucetToken
-            ? `1,000 m${faucetToken.symbol.toUpperCase()}`
-            : pending
-              ? `${formatAmount(pending.pay.amount)} ${pending.pay.symbol} → ${formatAmount(pending.receive.amount)} ${pending.receive.symbol}`
-              : null
+            ? `1,000 ${faucetToken.symbol.toUpperCase()}`
+            : null
         }
         onDismiss={() => {
           actions.dismiss();
