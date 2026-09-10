@@ -21,6 +21,7 @@
     "rebalance": "tsx scripts/rebalance.ts",
     "set-alias": "tsx scripts/set-alias.ts",
     "mirror-namespace": "tsx scripts/mirror-namespace.ts",
+    "forever-name": "tsx scripts/forever-name.ts",
     "contracts:build": "forge build --root ../contracts"
   },
   "dependencies": {
