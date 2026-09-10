@@ -25,7 +25,15 @@ const run = async () => {
 
   for (const slug of slugs) {
     const index = await fetchOnchainIndex(slug);
-    assert.ok(index, `${slug} must resolve`);
+
+    /**
+     * A registered label with no resolver is a namespace node, not a broken
+     * index — `funds` exists to lend its subregistry, and holds no records.
+     */
+    if (!index) {
+      console.log(`\n${slug}: namespace node, no resolver`);
+      continue;
+    }
 
     console.log(`\n${index.ensName}`);
     console.log(`  owner      ${index.owner}`);

@@ -20,6 +20,7 @@
     "probe:w3": "tsx scripts/probe-w3.ts",
     "rebalance": "tsx scripts/rebalance.ts",
     "set-alias": "tsx scripts/set-alias.ts",
+    "mirror-namespace": "tsx scripts/mirror-namespace.ts",
     "contracts:build": "forge build --root ../contracts"
   },
   "dependencies": {
