@@ -1,21 +1,72 @@
 "use client";
 
+import { ShuffleIcon } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
 import { formatWeight } from "@/lib/format";
 import { TOKENS } from "@/lib/mock/tokens";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
+import { isSameSelection, matchTheme } from "../themes";
 import { ConstituentRow } from "./ConstituentRow";
 import { type StepDefinition, Stepper } from "./Stepper";
 import { TokenPickerDialog } from "./TokenPickerDialog";
 
 const TOTAL_WEIGHT_BPS = 10_000;
-const DEFAULT_SYMBOLS: TokenSymbol[] = ["weth", "wbtc", "uni"];
 const SLUG_PATTERN = /[^a-z0-9-]/g;
 const PLACEHOLDER_SLUG = "your-index";
+
+interface Preset {
+  name: string;
+  description: string;
+}
+
+/**
+ * Starting points, so the form opens with something to react to rather than
+ * empty fields. No symbols here on purpose — the constituents come from these
+ * words, the same way they would for a name you typed yourself.
+ *
+ * None of these names collide with an index that already exists, because a
+ * slug that is taken cannot be registered.
+ */
+const PRESETS: Preset[] = [
+  {
+    name: "Blue Chip Majors",
+    description:
+      "The three largest assets by settlement volume, weighted evenly.",
+  },
+  {
+    name: "Dollar Reserve",
+    description:
+      "Fully collateralised dollar stablecoins held for treasury parking.",
+  },
+  {
+    name: "Lending Governance",
+    description:
+      "Governance tokens of the money markets that survived every cycle.",
+  },
+  {
+    name: "Staked Ether Basket",
+    description:
+      "Protocols that tokenise staked ether and capture consensus yield.",
+  },
+  {
+    name: "Rollup Natives",
+    description: "Native tokens of the rollups that settle back to Ethereum.",
+  },
+  {
+    name: "Compute Networks",
+    description:
+      "Decentralised inference, rendering and agent networks priced by usage.",
+  },
+  {
+    name: "Data and Oracles",
+    description:
+      "Price feeds and interoperability networks that secure onchain settlement.",
+  },
+];
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus-visible:ring-2 focus-visible:ring-accent/40";
@@ -46,13 +97,16 @@ const buildEvenWeights = (symbols: TokenSymbol[]): Record<string, number> => {
 
 export const IndexBuilderForm = () => {
   const [step, setStep] = useState(0);
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedSymbols, setSelectedSymbols] =
-    useState<TokenSymbol[]>(DEFAULT_SYMBOLS);
-  const [weights, setWeights] = useState<Record<string, number>>(() =>
-    buildEvenWeights(DEFAULT_SYMBOLS),
+  const [name, setName] = useState(PRESETS[0].name);
+  const [description, setDescription] = useState(PRESETS[0].description);
+  const [selectedSymbols, setSelectedSymbols] = useState<TokenSymbol[]>(
+    () => matchTheme(PRESETS[0].description) ?? [],
   );
+  const [weights, setWeights] = useState<Record<string, number>>(() =>
+    buildEvenWeights(matchTheme(PRESETS[0].description) ?? []),
+  );
+  /** Touch the token list once and the words stop overruling you. */
+  const [isSelectionManual, setIsSelectionManual] = useState(false);
   const [shouldLockMethodology, setShouldLockMethodology] = useState(true);
 
   const slug = toSlug(name);
@@ -86,10 +140,42 @@ export const IndexBuilderForm = () => {
     setWeights(buildEvenWeights(nextSymbols));
   };
 
+  const applyPreset = (preset: Preset) => {
+    setName(preset.name);
+    setDescription(preset.description);
+    setIsSelectionManual(false);
+  };
+
+  const shuffle = () => {
+    const others = PRESETS.filter((preset) => preset.name !== name);
+    applyPreset(others[Math.floor(Math.random() * others.length)]);
+  };
+
+  /**
+   * Randomised after mount, never during render: the server and the client
+   * would pick different presets and React would discard the markup.
+   */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs once, on mount
+  useEffect(() => {
+    applyPreset(PRESETS[Math.floor(Math.random() * PRESETS.length)]);
+  }, []);
+
+  /** Derive the holdings from the words, until the words stop being the source. */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: selection is the output here, not an input
+  useEffect(() => {
+    if (isSelectionManual) {
+      return;
+    }
+
+    const matched = matchTheme(`${name} ${description}`);
+
+    if (matched && !isSameSelection(matched, selectedSymbols)) {
+      replaceSymbols(matched);
+    }
+  }, [name, description, isSelectionManual]);
+
   const reset = () => {
-    setName("");
-    setDescription("");
-    replaceSymbols(DEFAULT_SYMBOLS);
+    applyPreset(PRESETS[0]);
     setShouldLockMethodology(true);
     setStep(0);
   };
@@ -130,9 +216,22 @@ export const IndexBuilderForm = () => {
       {step === 0 ? (
         <div className="space-y-4">
           <div>
-            <label htmlFor="index-name" className={LABEL_CLASS}>
-              Index name
-            </label>
+            <div className="mb-1.5 flex items-center justify-between gap-4">
+              <label
+                htmlFor="index-name"
+                className="text-xs font-medium text-ink-subtle"
+              >
+                Index name
+              </label>
+              <button
+                type="button"
+                onClick={shuffle}
+                className="flex items-center gap-1.5 text-xs font-medium text-accent transition-colors duration-150 ease-out hover:text-accent-hover"
+              >
+                <ShuffleIcon size={13} weight="bold" aria-hidden />
+                Shuffle
+              </button>
+            </div>
             <input
               id="index-name"
               value={name}
@@ -190,11 +289,12 @@ export const IndexBuilderForm = () => {
                       [symbol]: weightBps,
                     }))
                   }
-                  onRemove={() =>
+                  onRemove={() => {
+                    setIsSelectionManual(true);
                     replaceSymbols(
                       selectedSymbols.filter((entry) => entry !== symbol),
-                    )
-                  }
+                    );
+                  }}
                 />
               ))}
             </ul>
@@ -209,7 +309,10 @@ export const IndexBuilderForm = () => {
 
           <TokenPickerDialog
             availableSymbols={availableSymbols}
-            onSelect={(symbol) => replaceSymbols([...selectedSymbols, symbol])}
+            onSelect={(symbol) => {
+              setIsSelectionManual(true);
+              replaceSymbols([...selectedSymbols, symbol]);
+            }}
           />
 
           {!isBalanced ? (
