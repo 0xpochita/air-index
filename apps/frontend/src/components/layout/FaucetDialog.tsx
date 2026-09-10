@@ -12,15 +12,17 @@ import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import { useWallet } from "@/lib/onchain/WalletProvider";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
 
-const PILL =
-  "rounded-full border border-canvas/60 bg-surface/55 transition-colors duration-150 ease-out";
-
 /** Only symbols with a real Sepolia deployment can be minted. */
 const FAUCET_TOKENS = TOKEN_SYMBOLS.map((symbol) => TOKENS[symbol]).filter(
   isDeployed,
 );
 
-export const FaucetDialog = () => {
+interface FaucetDialogProps {
+  /** The trigger sits on the dark bar, so its styling comes from the caller. */
+  triggerClassName: string;
+}
+
+export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { address, isSepolia, epoch, connect } = useWallet();
   const { faucet, pending, error } = useVaultActions();
@@ -85,7 +87,7 @@ export const FaucetDialog = () => {
         type="button"
         onClick={open}
         title="Mint test tokens"
-        className={`${PILL} p-2 text-ink-muted hover:text-ink`}
+        className={triggerClassName}
       >
         <DropIcon size={16} aria-hidden />
         <span className="sr-only">Mint test tokens</span>

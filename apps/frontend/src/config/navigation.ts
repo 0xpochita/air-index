@@ -1,22 +1,14 @@
-import type { Icon } from "@phosphor-icons/react";
-import {
-  ArrowsLeftRightIcon,
-  CompassIcon,
-  HouseIcon,
-  PlusCircleIcon,
-} from "@phosphor-icons/react/dist/ssr";
-
 export interface NavItem {
   href: string;
   label: string;
-  icon: Icon;
 }
 
 export const PRIMARY_NAV: NavItem[] = [
-  { href: "/dashboard", label: "Dashboard", icon: HouseIcon },
-  { href: "/explore", label: "Explore", icon: CompassIcon },
-  { href: "/swap", label: "Swap", icon: ArrowsLeftRightIcon },
-  { href: "/create", label: "Create", icon: PlusCircleIcon },
+  { href: "/dashboard", label: "Dashboard" },
+  { href: "/explore", label: "Explore" },
+  { href: "/swap", label: "Swap" },
+  { href: "/create", label: "Create" },
+  { href: "/portfolio", label: "Portfolio" },
 ];
 
 export const indexHref = (slug: string): string => `/indexes/${slug}`;
