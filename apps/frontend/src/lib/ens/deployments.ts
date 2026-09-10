@@ -27,14 +27,19 @@ export const ENS_RPC_URL =
 
 export const PROTOCOL_ROOT = "airindex.eth";
 
-export const AIR_INDEX_REGISTRY = process.env.NEXT_PUBLIC_AIR_INDEX_REGISTRY as
-  | `0x${string}`
-  | undefined;
+/**
+ * Read on call, not at module load. Scripts load .env themselves, and an import
+ * evaluated before that ran would freeze this as undefined — which reads as
+ * "nothing is published yet" rather than as an error.
+ */
+export const getAirIndexRegistry = (): `0x${string}` | undefined =>
+  process.env.NEXT_PUBLIC_AIR_INDEX_REGISTRY as `0x${string}` | undefined;
 
 /**
  * Public RPCs cap eth_getLogs at 50k blocks, so scanning from genesis fails.
  * bootstrap.ts records the registry deploy block here to bound the query.
  */
-export const AIR_INDEX_FROM_BLOCK = process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK
-  ? BigInt(process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK)
-  : undefined;
+export const getAirIndexFromBlock = (): bigint | undefined =>
+  process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK
+    ? BigInt(process.env.NEXT_PUBLIC_AIR_INDEX_FROM_BLOCK)
+    : undefined;

@@ -1,8 +1,8 @@
 export { ensClient } from "./client";
 export {
-  AIR_INDEX_REGISTRY,
   ENS_DEPLOYMENT,
   ENS_RPC_URL,
+  getAirIndexRegistry,
   PROTOCOL_ROOT,
 } from "./deployments";
 export {

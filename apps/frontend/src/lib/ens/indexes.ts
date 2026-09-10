@@ -1,9 +1,9 @@
 import { permissionedRegistryAbi } from "./abis/PermissionedRegistry";
 import { ensClient } from "./client";
 import {
-  AIR_INDEX_FROM_BLOCK,
-  AIR_INDEX_REGISTRY,
   ENS_DEPLOYMENT,
+  getAirIndexFromBlock,
+  getAirIndexRegistry,
   PROTOCOL_ROOT,
 } from "./deployments";
 import {
@@ -53,14 +53,16 @@ export interface OnchainIndex {
  * rather than discovered onchain.
  */
 export const listPublishedSlugs = async (): Promise<string[]> => {
-  if (!AIR_INDEX_REGISTRY) {
+  const registry = getAirIndexRegistry();
+
+  if (!registry) {
     return [];
   }
 
   const logs = await ensClient.getLogs({
-    address: AIR_INDEX_REGISTRY,
+    address: registry,
     event: LABEL_REGISTERED_EVENT,
-    fromBlock: AIR_INDEX_FROM_BLOCK ?? "earliest",
+    fromBlock: getAirIndexFromBlock() ?? "earliest",
   });
 
   const slugs = logs.flatMap((log) => (log.args.label ? [log.args.label] : []));
@@ -71,7 +73,9 @@ export const listPublishedSlugs = async (): Promise<string[]> => {
 export const fetchOnchainIndex = async (
   slug: string,
 ): Promise<OnchainIndex | null> => {
-  if (!AIR_INDEX_REGISTRY) {
+  const registry = getAirIndexRegistry();
+
+  if (!registry) {
     return null;
   }
 
@@ -79,19 +83,19 @@ export const fetchOnchainIndex = async (
 
   const [resolver, owner, expiry] = await Promise.all([
     ensClient.readContract({
-      address: AIR_INDEX_REGISTRY,
+      address: registry,
       abi: permissionedRegistryAbi,
       functionName: "getResolver",
       args: [slug],
     }),
     ensClient.readContract({
-      address: AIR_INDEX_REGISTRY,
+      address: registry,
       abi: permissionedRegistryAbi,
       functionName: "findOwner",
       args: [slug],
     }),
     ensClient.readContract({
-      address: AIR_INDEX_REGISTRY,
+      address: registry,
       abi: permissionedRegistryAbi,
       functionName: "findExpiry",
       args: [slug],
