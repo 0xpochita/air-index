@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, LockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { ResolveNameButton } from "@/components/ens/ResolveNameButton";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
@@ -49,6 +50,7 @@ export const IndexDetailPage = ({ index }: IndexDetailPageProps) => (
               {index.ensName}
             </span>
             <CopyButton value={index.ensName} label="Copy ENS name" size={14} />
+            <ResolveNameButton name={index.ensName} size={14} />
           </p>
           {index.description ? (
             <p className="max-w-2xl text-sm text-ink-muted">

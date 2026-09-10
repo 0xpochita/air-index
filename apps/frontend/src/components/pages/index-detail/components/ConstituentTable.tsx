@@ -1,4 +1,5 @@
 import { ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { ResolveNameButton } from "@/components/ens/ResolveNameButton";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { formatWeight, truncateAddress } from "@/lib/format";
@@ -66,6 +67,9 @@ export const ConstituentTable = ({
                 <CopyButton
                   value={`${constituent.token.symbol}.${ensName}`}
                   label="Copy ENS name"
+                />
+                <ResolveNameButton
+                  name={`${constituent.token.symbol}.${ensName}`}
                 />
               </span>
             </td>
