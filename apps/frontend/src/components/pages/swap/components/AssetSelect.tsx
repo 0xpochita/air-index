@@ -8,7 +8,7 @@ const CHIP_CLASS =
 
 interface AssetChipProps {
   icon: ReactNode;
-  label: string;
+  label: ReactNode;
 }
 
 export const AssetChip = ({ icon, label }: AssetChipProps) => (
@@ -20,7 +20,7 @@ export const AssetChip = ({ icon, label }: AssetChipProps) => (
 
 interface AssetSelectProps<Value extends string> {
   icon: ReactNode;
-  label: string;
+  label: ReactNode;
   fieldLabel: string;
   value: Value;
   options: ReadonlyArray<{ value: Value; label: string }>;

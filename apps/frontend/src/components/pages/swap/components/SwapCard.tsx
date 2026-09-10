@@ -27,6 +27,10 @@ const PAY_INPUT_ID = "swap-pay-amount";
 const RECEIVE_OUTPUT_ID = "swap-receive-amount";
 const EXPLORER_TX = "https://sepolia.etherscan.io/tx/";
 
+const ensLabel = (name: string) => (
+  <span className="font-mono text-[13px] tracking-tight">{name}</span>
+);
+
 const MODE_PAY_LABEL: Record<SwapMode, string> = {
   deposit: "You pay",
   swap: "You swap",
@@ -70,7 +74,14 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       label={form.quoteSymbol}
     />
   );
-  const indexChip = <AssetChip icon={indexIcon} label={form.indexSymbol} />;
+  /**
+   * The name is the product, so the chip carries it rather than the ticker.
+   * Tickers stay in the rate line and the balance row, where a long name would
+   * push the numbers off screen.
+   */
+  const indexChip = (
+    <AssetChip icon={indexIcon} label={ensLabel(live.ensName)} />
+  );
 
   const alternateControl = alternate ? (
     <AssetSelect
@@ -81,7 +92,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           maxVisible={2}
         />
       }
-      label={form.alternateSymbol}
+      label={ensLabel(alternate.ensName)}
       fieldLabel="Index to receive"
       value={alternate.slug}
       options={others.map((entry) => ({
