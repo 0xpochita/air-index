@@ -6,7 +6,6 @@ import { ensClient } from "../src/lib/ens/client";
 import { PROTOCOL_ROOT } from "../src/lib/ens/deployments";
 import { toDnsEncoded, toNode } from "../src/lib/ens/name";
 import { readConstituentLabels } from "../src/lib/ens/read";
-import { getIndexBySlug } from "../src/lib/mock/indexes";
 import { loadEnv } from "./lib/env";
 import {
   getAgentWallet,
@@ -26,6 +25,7 @@ const SLUG = process.argv[2];
 /** EAC grants are revocable. The same call with `false` takes the key back. */
 const IS_REVOKE = process.argv.includes("--revoke");
 
+/** Override with AGENT_MANDATE="…" when the agent does something else. */
 const DEFAULT_MANDATE =
   "Reset every constituent to its target allocation on a fixed schedule.";
 
@@ -65,7 +65,7 @@ const run = async () => {
   const labels = await readConstituentLabels(ensName);
   assert.ok(labels.length > 0, `${ensName} publishes no constituent list`);
 
-  const mandate = getIndexBySlug(SLUG)?.rebalancer?.mandate ?? DEFAULT_MANDATE;
+  const mandate = process.env.AGENT_MANDATE || DEFAULT_MANDATE;
 
   console.log(`index    ${ensName}`);
   console.log(`agent    ${agent.account.address}`);

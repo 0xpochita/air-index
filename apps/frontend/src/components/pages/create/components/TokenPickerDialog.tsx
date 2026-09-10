@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { useRef, useState } from "react";
 import { TokenIcon } from "@/components/ui/TokenIcon";
-import { TOKENS } from "@/lib/mock/tokens";
+import { TOKENS } from "@/lib/tokens/registry";
 import type { TokenSymbol } from "@/types/index-fund";
 
 interface TokenPickerDialogProps {

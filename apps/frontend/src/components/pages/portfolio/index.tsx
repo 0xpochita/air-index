@@ -2,10 +2,7 @@
 
 import { PageHeader } from "@/components/ui/PageHeader";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
-import {
-  getPortfolioAllocation,
-  getWeightedDayChangePct,
-} from "@/lib/portfolio";
+import { getPortfolioAllocation } from "@/lib/portfolio";
 import { PortfolioSplit } from "./components/PortfolioSplit";
 
 export const PortfolioPage = () => {
@@ -21,7 +18,6 @@ export const PortfolioPage = () => {
       <PortfolioSplit
         positions={positions}
         totalValueUsd={totalValueUsd}
-        dayChangePct={getWeightedDayChangePct(positions)}
         allocation={getPortfolioAllocation(positions)}
       />
     </div>

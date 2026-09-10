@@ -12,8 +12,8 @@ const run = async () => {
   const { fetchOnchainIndex, listPublishedSlugs } = await import(
     "../src/lib/ens/indexes"
   );
-  const { SETTLEMENT_SYMBOL } = await import("../src/lib/mock/quotes");
-  const { TOKENS } = await import("../src/lib/mock/tokens");
+  const { SETTLEMENT_SYMBOL } = await import("../src/lib/settlement");
+  const { TOKENS } = await import("../src/lib/tokens/registry");
 
   const quote = TOKENS[SETTLEMENT_SYMBOL];
   const slugs = await listPublishedSlugs();

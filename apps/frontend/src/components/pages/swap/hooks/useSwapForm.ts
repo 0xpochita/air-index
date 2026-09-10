@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { parseUnits } from "viem";
-import { QUOTE_PRICE_USD, SETTLEMENT_SYMBOL } from "@/lib/mock/quotes";
-import { TOKENS } from "@/lib/mock/tokens";
 import { SHARE_DECIMALS } from "@/lib/onchain/abis";
 import { toFloat, usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import type { LiveIndex } from "@/lib/onchain/vaults";
+import { QUOTE_PRICE_USD, SETTLEMENT_SYMBOL } from "@/lib/settlement";
+import { TOKENS } from "@/lib/tokens/registry";
 import type { SwapMode } from "@/types/index-fund";
 
 const AMOUNT_PATTERN = /^\d*\.?\d*$/;
@@ -46,8 +46,7 @@ const parseAmount = (value: string): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const toIndexSymbol = (live: LiveIndex): string =>
-  (live.fund.ticker ?? live.slug).toUpperCase();
+const toIndexSymbol = (live: LiveIndex): string => live.slug.toUpperCase();
 
 /**
  * Every number here comes from the vault: the share price is read from the

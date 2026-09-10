@@ -5,14 +5,9 @@ import { permissionedResolverAbi } from "../src/lib/ens/abis/PermissionedResolve
 import { ensClient } from "../src/lib/ens/client";
 import { PROTOCOL_ROOT } from "../src/lib/ens/deployments";
 import { toNode } from "../src/lib/ens/name";
-import { readConstituentLabels } from "../src/lib/ens/read";
-import {
-  getUnitPriceUsd,
-  INCEPTION_UNIT_PRICE_USD,
-} from "../src/lib/index-math";
-import { getIndexBySlug } from "../src/lib/mock/indexes";
-import { SETTLEMENT_SYMBOL } from "../src/lib/mock/quotes";
-import { findToken, isDeployed, TOKENS } from "../src/lib/mock/tokens";
+import { readConstituentLabels, readIndexText } from "../src/lib/ens/read";
+import { SETTLEMENT_SYMBOL } from "../src/lib/settlement";
+import { findToken, isDeployed, TOKENS } from "../src/lib/tokens/registry";
 import { readArtifact } from "./lib/artifacts";
 import { loadEnv } from "./lib/env";
 import { getWallet, logTx, publicClient, requireFunds } from "./lib/wallet";
@@ -21,6 +16,7 @@ loadEnv();
 
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as const;
 const SLUG = process.argv[2];
+const DEFAULT_SHARE_PRICE_USD = 100;
 
 /**
  * Points a published index at real Sepolia contracts.
@@ -34,7 +30,7 @@ const SLUG = process.argv[2];
  * frontend.
  */
 const run = async () => {
-  assert.ok(SLUG, "usage: pnpm wire-index <slug>");
+  assert.ok(SLUG, "usage: pnpm wire-index <slug> [sharePriceUsd]");
 
   const registry = process.env.NEXT_PUBLIC_AIR_INDEX_REGISTRY as `0x${string}`;
   assert.ok(registry, "NEXT_PUBLIC_AIR_INDEX_REGISTRY is missing");
@@ -77,19 +73,18 @@ const run = async () => {
   if (vault && existingCode && existingCode !== "0x") {
     console.log(`  ${vault} (already deployed)`);
   } else {
-    const fund = getIndexBySlug(SLUG);
-    const unitPriceUsd = fund
-      ? getUnitPriceUsd(fund)
-      : INCEPTION_UNIT_PRICE_USD;
+    const displayName = (await readIndexText(ensName, "name")) ?? SLUG;
+    /** Every index launches at the same price; there is no history to price against. */
+    const unitPriceUsd = Number(process.argv[3] ?? DEFAULT_SHARE_PRICE_USD);
     const sharePrice = parseUnits(unitPriceUsd.toFixed(6), quote.decimals);
-    const shareSymbol = (fund?.ticker ?? SLUG).toUpperCase().slice(0, 11);
+    const shareSymbol = SLUG.toUpperCase().replace(/-/g, "").slice(0, 11);
 
     const { abi, bytecode } = readArtifact("IndexVault");
     const hash = await client.deployContract({
       abi,
       bytecode,
       args: [
-        `${fund?.name ?? SLUG} Index`,
+        `${displayName} Index`,
         shareSymbol,
         ensName,
         quote.address,

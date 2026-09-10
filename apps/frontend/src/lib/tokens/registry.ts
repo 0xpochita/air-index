@@ -3,7 +3,7 @@ import {
   type Token,
   type TokenSymbol,
 } from "@/types/index-fund";
-import sepolia from "./sepolia-tokens.json";
+import sepolia from "./sepolia.json";
 
 export const ZERO_ADDRESS =
   "0x0000000000000000000000000000000000000000" as const;

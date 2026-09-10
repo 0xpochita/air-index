@@ -1,86 +1,71 @@
 import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { listPublishedSlugs } from "@/lib/ens/indexes";
-import { getAllIndexes, getCollections } from "@/lib/mock/indexes";
-import type { IndexFund } from "@/types/index-fund";
+import { fetchLiveIndexes, type LiveIndex } from "@/lib/onchain/vaults";
 import { CollectionTile } from "./components/CollectionTile";
 import { IndexTable } from "./components/IndexTable";
-import { TablePagination } from "./components/TablePagination";
 
-const ROWS_PER_PAGE = 8;
 const ALL_ID = "all";
 
-const resolvePage = (
-  rawPage: string | undefined,
-  totalPages: number,
-): number => {
-  const parsed = Number(rawPage);
-  if (!Number.isInteger(parsed) || parsed < 1) {
-    return 1;
-  }
-  return Math.min(parsed, totalPages);
-};
+interface Facet {
+  id: string;
+  title: string;
+  matches: (index: LiveIndex) => boolean;
+}
+
+/**
+ * Facets, not categories. A category would be an opinion this app holds about
+ * an index; each of these is a fact the index publishes about itself.
+ */
+const FACETS: Facet[] = [
+  { id: ALL_ID, title: "All indexes", matches: () => true },
+  {
+    id: "locked",
+    title: "Locked methodology",
+    matches: (index) => index.isMethodologyLocked,
+  },
+  {
+    id: "tradeable",
+    title: "Tradeable",
+    matches: (index) => index.vault !== null,
+  },
+];
 
 interface ExplorePageProps {
-  page?: string;
   collection?: string;
 }
 
-export const ExplorePage = async ({ page, collection }: ExplorePageProps) => {
-  const indexes = getAllIndexes();
-  const liveSlugs = new Set(await listPublishedSlugs().catch(() => []));
+export const ExplorePage = async ({ collection }: ExplorePageProps) => {
+  const indexes = await fetchLiveIndexes().catch(() => []);
 
-  const tiles = [
-    { id: ALL_ID, title: "All indexes", indexes },
-    ...getCollections().map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      indexes: entry.indexes,
-    })),
-  ];
-
-  const activeId = tiles.some((tile) => tile.id === collection)
+  const activeId = FACETS.some((facet) => facet.id === collection)
     ? (collection as string)
     : ALL_ID;
-  const active = tiles.find((tile) => tile.id === activeId) ?? tiles[0];
+  const active = FACETS.find((facet) => facet.id === activeId) ?? FACETS[0];
 
-  /** Live first: a name anyone can resolve outranks one that only exists here. */
-  const rows: IndexFund[] = [...active.indexes].sort((first, second) => {
-    const liveDelta =
-      Number(liveSlugs.has(second.slug)) - Number(liveSlugs.has(first.slug));
-    return liveDelta !== 0 ? liveDelta : first.name.localeCompare(second.name);
-  });
-
-  const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
-  const currentPage = resolvePage(page, totalPages);
-  const visible = rows.slice(
-    (currentPage - 1) * ROWS_PER_PAGE,
-    currentPage * ROWS_PER_PAGE,
-  );
-
-  const tileHref = (id: string) =>
-    id === ALL_ID ? "/explore" : `/explore?collection=${id}`;
-  const pageHref = (next: number) =>
-    activeId === ALL_ID
-      ? `/explore?page=${next}`
-      : `/explore?collection=${activeId}&page=${next}`;
+  const rows = indexes
+    .filter(active.matches)
+    .sort((first, second) => first.name.localeCompare(second.name));
 
   return (
     <div className="space-y-6">
       <PageHeader
         title="Explore"
-        description="Crypto index funds published as ENS names. Every allocation is readable onchain."
+        description="Every index published under airindex.eth. Read straight from the namespace."
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
-        {tiles.map((tile) => (
+        {FACETS.map((facet) => (
           <CollectionTile
-            key={tile.id}
-            href={tileHref(tile.id)}
-            title={tile.title}
-            indexes={tile.indexes}
-            isActive={tile.id === activeId}
+            key={facet.id}
+            href={
+              facet.id === ALL_ID
+                ? "/explore"
+                : `/explore?collection=${facet.id}`
+            }
+            title={facet.title}
+            indexes={indexes.filter(facet.matches)}
+            isActive={facet.id === activeId}
           />
         ))}
       </div>
@@ -90,25 +75,16 @@ export const ExplorePage = async ({ page, collection }: ExplorePageProps) => {
           title={active.title}
           action={
             <span className="text-xs text-ink-subtle">
-              {`${liveSlugs.size} live on Sepolia`}
+              {rows.length === 1 ? "1 index" : `${rows.length} indexes`}
             </span>
           }
         />
-        {visible.length > 0 ? (
-          <>
-            <IndexTable indexes={visible} liveSlugs={liveSlugs} />
-            {totalPages > 1 ? (
-              <TablePagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                pageHref={pageHref}
-              />
-            ) : null}
-          </>
+        {rows.length > 0 ? (
+          <IndexTable indexes={rows} />
         ) : (
           <EmptyState
-            title="No indexes yet"
-            description="Nothing has been published under the protocol root. Create the first index to get started."
+            title="Nothing here yet"
+            description="No index under the protocol root matches. Publish one and it appears the moment the transaction lands."
           />
         )}
       </Card>

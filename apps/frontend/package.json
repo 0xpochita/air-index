@@ -13,7 +13,6 @@
     "probe:w2": "tsx scripts/probe-w2.ts",
     "bootstrap": "tsx scripts/bootstrap.ts",
     "deploy-registrar": "tsx scripts/deploy-registrar.ts",
-    "create-index": "tsx scripts/create-index.ts",
     "deploy-tokens": "tsx scripts/deploy-tokens.ts",
     "wire-index": "tsx scripts/wire-index.ts",
     "publish-agent": "tsx scripts/publish-agent.ts",

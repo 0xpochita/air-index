@@ -1,23 +1,26 @@
-import { BroadcastIcon, LockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
+import {
+  BroadcastIcon,
+  LinkSimpleIcon,
+  LockSimpleIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref } from "@/config/navigation";
-import type { IndexFund } from "@/types/index-fund";
+import type { LiveIndex } from "@/lib/onchain/vaults";
 
 const HEADER_CLASS =
   "px-5 py-2.5 text-xs font-medium text-ink-subtle bg-surface-subtle";
 
 interface IndexTableProps {
-  indexes: IndexFund[];
-  liveSlugs: Set<string>;
+  indexes: LiveIndex[];
 }
 
 /**
- * Name and composition, and nothing else. Returns, holder counts and deposit
- * totals are not ENS records and nobody can check them — a table of numbers the
- * chain cannot back is worse than no table.
+ * Name, composition and the words the index publishes about itself. Every
+ * column is a record or a role — there is no number here that the chain cannot
+ * be asked for.
  */
-export const IndexTable = ({ indexes, liveSlugs }: IndexTableProps) => (
+export const IndexTable = ({ indexes }: IndexTableProps) => (
   <div className="overflow-x-auto">
     <table className="w-full min-w-[42rem] border-collapse text-left">
       <thead>
@@ -45,11 +48,11 @@ export const IndexTable = ({ indexes, liveSlugs }: IndexTableProps) => (
                   <span className="text-sm font-semibold text-ink">
                     {index.name}
                   </span>
-                  {liveSlugs.has(index.slug) ? (
+                  {index.vault ? (
                     <BroadcastIcon
                       size={13}
                       weight="fill"
-                      aria-label="Live on Sepolia"
+                      aria-label="Tradeable"
                       className="text-positive"
                     />
                   ) : null}
@@ -61,6 +64,14 @@ export const IndexTable = ({ indexes, liveSlugs }: IndexTableProps) => (
                       className="text-ink-subtle"
                     />
                   ) : null}
+                  {index.isTransferable ? null : (
+                    <LinkSimpleIcon
+                      size={13}
+                      weight="bold"
+                      aria-label="Soulbound"
+                      className="text-accent"
+                    />
+                  )}
                 </span>
                 <span className="mt-0.5 block truncate font-mono text-xs text-ink-muted">
                   {index.ensName}
@@ -75,7 +86,7 @@ export const IndexTable = ({ indexes, liveSlugs }: IndexTableProps) => (
               />
             </td>
             <td className="max-w-md px-5 py-4 text-sm text-ink-muted">
-              {index.description}
+              {index.description ?? "—"}
             </td>
           </tr>
         ))}

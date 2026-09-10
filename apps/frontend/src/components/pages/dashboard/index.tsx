@@ -2,10 +2,7 @@
 
 import { AllocationCard } from "@/components/portfolio/AllocationCard";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
-import {
-  getPortfolioAllocation,
-  getWeightedDayChangePct,
-} from "@/lib/portfolio";
+import { getPortfolioAllocation } from "@/lib/portfolio";
 import { PortfolioHero } from "./components/PortfolioHero";
 import { PositionList } from "./components/PositionList";
 
@@ -17,7 +14,6 @@ export const DashboardPage = () => {
     <div className="space-y-6">
       <PortfolioHero
         totalValueUsd={totalValueUsd}
-        dayChangePct={getWeightedDayChangePct(positions)}
         indexCount={positions.length}
         allocation={allocation}
       />

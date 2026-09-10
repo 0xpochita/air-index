@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react";
 import { erc20Abi, maxUint256 } from "viem";
 import { ensClient } from "@/lib/ens/client";
-import { SETTLEMENT_SYMBOL } from "@/lib/mock/quotes";
-import { TOKENS } from "@/lib/mock/tokens";
+import { SETTLEMENT_SYMBOL } from "@/lib/settlement";
+import { TOKENS } from "@/lib/tokens/registry";
 import { indexVaultAbi, mockErc20Abi } from "./abis";
 import { useWallet } from "./WalletProvider";
 

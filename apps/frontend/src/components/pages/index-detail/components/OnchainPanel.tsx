@@ -7,17 +7,17 @@ import {
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { SITE } from "@/config/site";
-import type { OnchainIndex } from "@/lib/ens/indexes";
 import { truncateAddress } from "@/lib/format";
+import type { LiveIndex } from "@/lib/onchain/vaults";
 import { LockMethodologyButton } from "./LockMethodologyButton";
 
 const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
 
 interface OnchainPanelProps {
-  onchain: OnchainIndex;
+  index: LiveIndex;
 }
 
-export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
+export const OnchainPanel = ({ index: onchain }: OnchainPanelProps) => (
   <Card>
     <CardHeader
       title="Onchain state"
@@ -48,14 +48,14 @@ export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
       <div className="flex items-center justify-between gap-4">
         <dt className="text-ink-subtle">Share token</dt>
         <dd className="font-mono text-xs text-ink">
-          {onchain.shareToken ? (
+          {onchain.vault ? (
             <a
-              href={`${EXPLORER_ADDRESS}${onchain.shareToken}`}
+              href={`${EXPLORER_ADDRESS}${onchain.vault}`}
               target="_blank"
               rel="noreferrer"
               className="hover:text-accent"
             >
-              {truncateAddress(onchain.shareToken)}
+              {truncateAddress(onchain.vault)}
             </a>
           ) : (
             <span className="text-ink-muted">Not published</span>
@@ -78,7 +78,7 @@ export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
       <div className="flex items-center justify-between gap-4">
         <dt className="text-ink-subtle">Expires</dt>
         <dd className="tabular-nums text-xs text-ink">
-          {new Date(Number(onchain.expiry) * 1000).toLocaleDateString("en-CA")}
+          {new Date(onchain.expiresAt * 1000).toLocaleDateString("en-CA")}
         </dd>
       </div>
       <div className="flex items-center justify-between gap-4">

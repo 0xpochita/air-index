@@ -1,6 +1,14 @@
-import type { PortfolioPosition, Token } from "@/types/index-fund";
+import type { LiveIndex } from "@/lib/onchain/vaults";
+import type { Token } from "@/types/index-fund";
 
 const BASIS_POINTS_PER_UNIT = 10_000;
+
+export interface PortfolioPosition {
+  index: LiveIndex;
+  /** Share token balance, as held onchain. */
+  units: number;
+  valueUsd: number;
+}
 
 export interface AllocationSlice {
   token: Token;
@@ -10,20 +18,6 @@ export interface AllocationSlice {
 
 export const getPortfolioValueUsd = (positions: PortfolioPosition[]): number =>
   positions.reduce((total, position) => total + position.valueUsd, 0);
-
-export const getWeightedDayChangePct = (
-  positions: PortfolioPosition[],
-): number => {
-  const totalValueUsd = getPortfolioValueUsd(positions);
-  if (totalValueUsd === 0) {
-    return 0;
-  }
-  return positions.reduce(
-    (total, position) =>
-      total + position.dayChangePct * (position.valueUsd / totalValueUsd),
-    0,
-  );
-};
 
 export const getPortfolioAllocation = (
   positions: PortfolioPosition[],

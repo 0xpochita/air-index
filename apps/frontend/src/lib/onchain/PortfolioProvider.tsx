@@ -10,13 +10,14 @@ import {
 } from "react";
 import { erc20Abi, formatUnits } from "viem";
 import { ensClient } from "@/lib/ens/client";
+import type { PortfolioPosition } from "@/lib/portfolio";
 import {
   QUOTE_PRICE_USD,
   QUOTE_SYMBOLS,
   SETTLEMENT_SYMBOL,
-} from "@/lib/mock/quotes";
-import { isDeployed, TOKENS } from "@/lib/mock/tokens";
-import type { PortfolioPosition, TokenSymbol } from "@/types/index-fund";
+} from "@/lib/settlement";
+import { isDeployed, TOKENS } from "@/lib/tokens/registry";
+import type { TokenSymbol } from "@/types/index-fund";
 import { indexVaultAbi, SHARE_DECIMALS } from "./abis";
 import type { LiveIndex } from "./vaults";
 import { useWallet } from "./WalletProvider";
@@ -193,12 +194,11 @@ export const PortfolioProvider = ({
 
       return [
         {
-          index: entry.fund,
+          index: entry,
           units: toFloat(balance, SHARE_DECIMALS),
           valueUsd:
             toFloat(quoteAmount, quoteDecimals) *
             QUOTE_PRICE_USD[SETTLEMENT_SYMBOL],
-          dayChangePct: entry.fund.dayReturnPct,
         } satisfies PortfolioPosition,
       ];
     });

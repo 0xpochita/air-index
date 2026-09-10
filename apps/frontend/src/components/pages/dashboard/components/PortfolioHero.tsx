@@ -13,7 +13,7 @@ import { useState } from "react";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
-import { formatSignedPercent, formatUsd, truncateAddress } from "@/lib/format";
+import { formatUsd, truncateAddress } from "@/lib/format";
 import { useWallet } from "@/lib/onchain/WalletProvider";
 import type { AllocationSlice } from "@/lib/portfolio";
 import type { Constituent } from "@/types/index-fund";
@@ -29,7 +29,6 @@ const ACTIONS: ReadonlyArray<{ href: string; label: string; icon: Icon }> = [
 
 interface PortfolioHeroProps {
   totalValueUsd: number;
-  dayChangePct: number;
   indexCount: number;
   allocation: AllocationSlice[];
 }
@@ -78,13 +77,11 @@ const CopyAddress = ({ address }: { address: `0x${string}` }) => {
 
 export const PortfolioHero = ({
   totalValueUsd,
-  dayChangePct,
   indexCount,
   allocation,
 }: PortfolioHeroProps) => {
   const { address } = useWallet();
   const stack = toStack(allocation);
-  const isUp = dayChangePct >= 0;
 
   return (
     <section className="soft-shell rounded-[1.75rem] bg-surface p-2.5">
@@ -122,19 +119,6 @@ export const PortfolioHero = ({
                 : `Connect a wallet to see your positions · ${SITE.network}`}
             </span>
           )}
-
-          {stack.length > 0 ? (
-            <span
-              className={cn(
-                "rounded-full px-3 py-1.5 text-sm font-semibold tabular-nums",
-                isUp
-                  ? "bg-positive/15 text-positive"
-                  : "bg-negative/12 text-negative",
-              )}
-            >
-              {formatSignedPercent(dayChangePct)}
-            </span>
-          ) : null}
         </div>
       </div>
 

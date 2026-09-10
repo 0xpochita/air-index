@@ -37,6 +37,11 @@ export const TOKEN_SYMBOLS = [
 
 export type TokenSymbol = (typeof TOKEN_SYMBOLS)[number];
 
+/**
+ * Display metadata for a symbol. The address comes from a deployment receipt;
+ * the name and decimals are a local registry, because a token contract's
+ * symbol is not something the index publishes.
+ */
 export interface Token {
   symbol: TokenSymbol;
   name: string;
@@ -48,44 +53,6 @@ export interface Token {
 export interface Constituent {
   token: Token;
   weightBps: number;
-}
-
-export interface Rebalancer {
-  label: string;
-  address: `0x${string}`;
-  mandate: string;
-  delegatedKey: string;
-}
-
-export interface IndexFund {
-  slug: string;
-  ensName: string;
-  ticker: string | null;
-  name: string;
-  description: string;
-  constituents: Constituent[];
-  allTimeReturnPct: number;
-  dayReturnPct: number;
-  holders: number;
-  totalDepositsUsd: number;
-  isMethodologyLocked: boolean;
-  methodologyCid: string;
-  creator: `0x${string}`;
-  rebalancer: Rebalancer | null;
-}
-
-export interface IndexCollection {
-  id: string;
-  title: string;
-  indexes: IndexFund[];
-}
-
-export interface PortfolioPosition {
-  index: IndexFund;
-  /** Share token balance, as held onchain. */
-  units: number;
-  valueUsd: number;
-  dayChangePct: number;
 }
 
 export const SWAP_MODES = ["deposit", "swap", "redeem"] as const;

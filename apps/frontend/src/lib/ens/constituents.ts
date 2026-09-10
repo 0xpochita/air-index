@@ -1,4 +1,4 @@
-import { findToken } from "@/lib/mock/tokens";
+import { findToken } from "@/lib/tokens/registry";
 import type { Constituent } from "@/types/index-fund";
 import type { OnchainConstituent } from "./read";
 

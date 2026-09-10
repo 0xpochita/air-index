@@ -36,6 +36,7 @@ const LABEL_REGISTERED_EVENT = {
 export interface OnchainIndex {
   slug: string;
   ensName: string;
+  name: string | null;
   description: string | null;
   resolver: `0x${string}`;
   owner: `0x${string}`;
@@ -126,6 +127,7 @@ export const fetchOnchainIndex = async (
   }
 
   const [
+    name,
     description,
     labels,
     shareToken,
@@ -133,6 +135,7 @@ export const fetchOnchainIndex = async (
     isMethodologyLocked,
     provenance,
   ] = await Promise.all([
+    readIndexText(ensName, "name"),
     readIndexText(ensName, "description"),
     readConstituentLabels(ensName),
     readIndexAddress(ensName),
@@ -163,6 +166,7 @@ export const fetchOnchainIndex = async (
   return {
     slug,
     ensName,
+    name,
     description,
     resolver: resolver as `0x${string}`,
     owner: owner as `0x${string}`,

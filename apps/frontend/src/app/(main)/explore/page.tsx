@@ -8,13 +8,13 @@ export const metadata: Metadata = {
 };
 
 interface ExploreRouteProps {
-  searchParams: Promise<{ page?: string; collection?: string }>;
+  searchParams: Promise<{ collection?: string }>;
 }
 
 export default async function ExploreRoute({
   searchParams,
 }: ExploreRouteProps) {
-  const { page, collection } = await searchParams;
+  const { collection } = await searchParams;
 
-  return <ExplorePage page={page} collection={collection} />;
+  return <ExplorePage collection={collection} />;
 }

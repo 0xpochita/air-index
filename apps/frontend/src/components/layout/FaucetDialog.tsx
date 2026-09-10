@@ -7,10 +7,10 @@ import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
 import { ensClient } from "@/lib/ens/client";
 import { formatAmount } from "@/lib/format";
-import { isDeployed, TOKENS } from "@/lib/mock/tokens";
 import { toFloat } from "@/lib/onchain/PortfolioProvider";
 import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import { useWallet } from "@/lib/onchain/WalletProvider";
+import { isDeployed, TOKENS } from "@/lib/tokens/registry";
 import {
   TOKEN_SYMBOLS,
   type Token,

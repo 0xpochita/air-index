@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { ReturnValue } from "@/components/ui/ReturnValue";
 import { SoftCard } from "@/components/ui/SoftCard";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref } from "@/config/navigation";
 import { formatUsd } from "@/lib/format";
-import type { PortfolioPosition } from "@/types/index-fund";
+import type { PortfolioPosition } from "@/lib/portfolio";
 
 interface PositionListProps {
   positions: PortfolioPosition[];
@@ -47,14 +46,8 @@ export const PositionList = ({ positions }: PositionListProps) => (
                   </span>
                 </span>
               </span>
-              <span className="flex shrink-0 flex-col items-end gap-0.5">
-                <span className="text-sm font-semibold tabular-nums text-ink">
-                  {formatUsd(position.valueUsd)}
-                </span>
-                <ReturnValue
-                  value={position.dayChangePct}
-                  className="text-xs"
-                />
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-ink">
+                {formatUsd(position.valueUsd)}
               </span>
             </Link>
           </li>

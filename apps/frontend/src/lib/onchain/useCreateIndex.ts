@@ -7,7 +7,7 @@ import { permissionedResolverAbi } from "@/lib/ens/abis/PermissionedResolver";
 import { ensClient } from "@/lib/ens/client";
 import { getAirIndexRegistry, PROTOCOL_ROOT } from "@/lib/ens/deployments";
 import { toNode } from "@/lib/ens/name";
-import { isDeployed, TOKENS } from "@/lib/mock/tokens";
+import { isDeployed, TOKENS } from "@/lib/tokens/registry";
 import type { TokenSymbol } from "@/types/index-fund";
 import { airIndexRegistrarAbi, getAirIndexRegistrar } from "./registrar";
 import { useWallet } from "./WalletProvider";
@@ -88,6 +88,11 @@ export const buildRecords = ({
       abi: permissionedResolverAbi,
       functionName: "setText",
       args: [toNode(ensName), "constituents", symbols.join(",")],
+    }),
+    encodeFunctionData({
+      abi: permissionedResolverAbi,
+      functionName: "setText",
+      args: [toNode(ensName), "name", name],
     }),
     encodeFunctionData({
       abi: permissionedResolverAbi,

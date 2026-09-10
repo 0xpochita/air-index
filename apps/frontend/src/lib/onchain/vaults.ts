@@ -1,91 +1,69 @@
 import { toDisplayConstituents } from "@/lib/ens/constituents";
 import { fetchOnchainIndexes, type OnchainIndex } from "@/lib/ens/indexes";
-import { getIndexBySlug } from "@/lib/mock/indexes";
-import type { IndexFund } from "@/types/index-fund";
+import type { OnchainAgent } from "@/lib/ens/read";
+import type { Constituent } from "@/types/index-fund";
 
+/**
+ * An index as the chain describes it, flattened for rendering. Nothing here is
+ * supplied by this app: every field is a record, a role or a registry entry.
+ *
+ * `expiresAt` is seconds rather than a bigint because this crosses the server
+ * to client boundary, and a bigint does not survive that reliably.
+ */
 export interface LiveIndex {
   slug: string;
   ensName: string;
+  name: string;
+  description: string | null;
+  constituents: Constituent[];
   /** The share token, read from `addr(60)` on the index name itself. */
   vault: `0x${string}` | null;
-  fund: IndexFund;
+  resolver: `0x${string}`;
+  owner: `0x${string}`;
+  agent: OnchainAgent | null;
+  isMethodologyLocked: boolean;
+  isTransferable: boolean;
+  isVerifiedResolver: boolean;
+  expiresAt: number;
 }
 
+/** Indexes published before `text("name")` existed fall back to their label. */
 const toTitle = (slug: string): string =>
   slug
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 
-/**
- * Chain data wins for anything the chain publishes. The local catalogue only
- * supplies what ENS has no opinion about — returns, holder counts, the copy on
- * the marketing cards.
- */
-const toFund = (onchain: OnchainIndex): IndexFund => {
-  const constituents = toDisplayConstituents(onchain.constituents);
-  const local = getIndexBySlug(onchain.slug);
-
-  if (local) {
-    return {
-      ...local,
-      description: onchain.description ?? local.description,
-      constituents,
-      isMethodologyLocked:
-        onchain.isMethodologyLocked ?? local.isMethodologyLocked,
-      creator: onchain.owner,
-    };
-  }
-
-  return {
-    slug: onchain.slug,
-    ensName: onchain.ensName,
-    ticker: null,
-    name: toTitle(onchain.slug),
-    description: onchain.description ?? "Published onchain.",
-    constituents,
-    allTimeReturnPct: 0,
-    dayReturnPct: 0,
-    holders: 0,
-    totalDepositsUsd: 0,
-    isMethodologyLocked: onchain.isMethodologyLocked ?? false,
-    methodologyCid: "",
-    creator: onchain.owner,
-    rebalancer: null,
-  };
-};
+export const toLiveIndex = (onchain: OnchainIndex): LiveIndex => ({
+  slug: onchain.slug,
+  ensName: onchain.ensName,
+  name: onchain.name ?? toTitle(onchain.slug),
+  description: onchain.description,
+  constituents: toDisplayConstituents(onchain.constituents),
+  vault: onchain.shareToken,
+  resolver: onchain.resolver,
+  owner: onchain.owner,
+  agent: onchain.agent,
+  isMethodologyLocked: onchain.isMethodologyLocked ?? false,
+  isTransferable: onchain.isTransferable,
+  isVerifiedResolver: onchain.isVerifiedResolver,
+  expiresAt: Number(onchain.expiry),
+});
 
 /**
- * Every index published under the protocol root, with the share token each one
- * settles in. Aliases resolve to the same records as their target, so they
- * arrive here as duplicate entries and are collapsed by vault address.
+ * Every index published under the protocol root. Aliases resolve to the same
+ * records as their target, so they arrive here as duplicates and are collapsed
+ * by resolver — the canonical slug wins by arriving first.
  */
 export const fetchLiveIndexes = async (): Promise<LiveIndex[]> => {
   const indexes = await fetchOnchainIndexes();
+  const byResolver = new Map<string, LiveIndex>();
 
-  const entries = indexes.map(
-    (onchain) =>
-      ({
-        slug: onchain.slug,
-        ensName: onchain.ensName,
-        vault: onchain.shareToken,
-        fund: toFund(onchain),
-      }) satisfies LiveIndex,
-  );
-
-  const byVault = new Map<string, LiveIndex>();
-
-  for (const entry of entries) {
-    if (!entry.vault) {
-      continue;
-    }
-
-    const seen = byVault.get(entry.vault);
-    /** Prefer the canonical slug over an alias pointed at the same vault. */
-    if (!seen || (!getIndexBySlug(seen.slug) && getIndexBySlug(entry.slug))) {
-      byVault.set(entry.vault, entry);
+  for (const onchain of indexes) {
+    if (!byResolver.has(onchain.resolver)) {
+      byResolver.set(onchain.resolver, toLiveIndex(onchain));
     }
   }
 
-  return [...byVault.values()];
+  return [...byResolver.values()];
 };

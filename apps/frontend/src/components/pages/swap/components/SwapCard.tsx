@@ -96,11 +96,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
   const form = useSwapForm({ live, alternate });
 
   const indexIcon = (
-    <TokenStack
-      constituents={live.fund.constituents}
-      size="sm"
-      maxVisible={2}
-    />
+    <TokenStack constituents={live.constituents} size="sm" maxVisible={2} />
   );
 
   const quoteChip = (
@@ -117,7 +113,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
     <AssetSelect
       icon={
         <TokenStack
-          constituents={alternate.fund.constituents}
+          constituents={alternate.constituents}
           size="sm"
           maxVisible={2}
         />
@@ -127,7 +123,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       value={alternate.slug}
       options={others.map((entry) => ({
         value: entry.slug,
-        label: entry.fund.name,
+        label: entry.name,
       }))}
       onChange={setAlternateSlug}
     />
@@ -247,13 +243,13 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       <header className="flex items-center justify-between gap-4 px-1">
         <div className="flex min-w-0 items-center gap-3">
           <TokenStack
-            constituents={live.fund.constituents}
+            constituents={live.constituents}
             size="md"
             maxVisible={3}
           />
           <div className="min-w-0">
             <h1 className="truncate text-base font-semibold text-ink">
-              {live.fund.name}
+              {live.name}
             </h1>
             <p className="truncate font-mono text-xs text-ink-subtle">
               {live.ensName}
@@ -361,7 +357,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
                 <TokenIcon token={form.quote} size="lg" />
               ) : (
                 <TokenStack
-                  constituents={live.fund.constituents}
+                  constituents={live.constituents}
                   size="md"
                   maxVisible={3}
                 />
@@ -374,18 +370,18 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
                 <TokenIcon token={form.quote} size="lg" />
               ) : (
                 <TokenStack
-                  constituents={pending.target.fund.constituents}
+                  constituents={pending.target.constituents}
                   size="md"
                   maxVisible={3}
                 />
               ),
           }}
           index={{
-            name: pending.target.fund.name,
+            name: pending.target.name,
             ensName: pending.target.ensName,
             icon: (
               <TokenStack
-                constituents={pending.target.fund.constituents}
+                constituents={pending.target.constituents}
                 size="md"
                 maxVisible={3}
               />
@@ -410,7 +406,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
             <TokenIcon token={faucetToken} size="lg" />
           ) : (
             <TokenStack
-              constituents={pending?.target.fund.constituents ?? []}
+              constituents={pending?.target.constituents ?? []}
               size="lg"
               maxVisible={4}
             />

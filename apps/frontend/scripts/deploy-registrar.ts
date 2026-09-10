@@ -69,7 +69,10 @@ const run = async () => {
   });
   const holders = getAssigneeCount(counts as bigint, REGISTRY_ROLE.REGISTRAR);
   console.log(`  REGISTRAR holders: ${holders}`);
-  assert.ok(holders >= 2, "the registrar must hold REGISTRAR alongside the deployer");
+  assert.ok(
+    holders >= 2,
+    "the registrar must hold REGISTRAR alongside the deployer",
+  );
 
   writeEnv("NEXT_PUBLIC_AIR_INDEX_REGISTRAR", registrar);
   console.log("\nanyone can now publish an index under airindex.eth");

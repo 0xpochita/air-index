@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { QUOTE_SYMBOLS } from "../src/lib/mock/quotes";
-import { getTokenDecimals, TOKENS } from "../src/lib/mock/tokens";
+import { QUOTE_SYMBOLS } from "../src/lib/settlement";
+import { getTokenDecimals, TOKENS } from "../src/lib/tokens/registry";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "../src/types/index-fund";
 import { readArtifact } from "./lib/artifacts";
 import { loadEnv } from "./lib/env";
@@ -12,7 +12,7 @@ loadEnv();
 
 const CATALOGUE_PATH = path.resolve(
   process.cwd(),
-  "src/lib/mock/sepolia-tokens.json",
+  "src/lib/tokens/sepolia.json",
 );
 const CHAIN_ID = 11_155_111;
 const FAUCET_WHOLE_UNITS = 1_000n;
@@ -48,14 +48,11 @@ const writeCatalogue = (catalogue: Catalogue) => {
  *   pnpm deploy-tokens link,snx,arb
  */
 const resolveDefaultSymbols = async (): Promise<TokenSymbol[]> => {
-  const { listPublishedSlugs } = await import("../src/lib/ens/indexes");
-  const { getIndexBySlug } = await import("../src/lib/mock/indexes");
+  const { fetchLiveIndexes } = await import("../src/lib/onchain/vaults");
 
-  const slugs = await listPublishedSlugs().catch(() => []);
-  const constituents = slugs.flatMap(
-    (slug) =>
-      getIndexBySlug(slug)?.constituents.map((entry) => entry.token.symbol) ??
-      [],
+  const indexes = await fetchLiveIndexes().catch(() => []);
+  const constituents = indexes.flatMap((index) =>
+    index.constituents.map((entry) => entry.token.symbol),
   );
 
   return [...new Set<TokenSymbol>([...QUOTE_SYMBOLS, ...constituents])];

@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { cn } from "@/lib/cn";
-import type { Constituent, IndexFund } from "@/types/index-fund";
+import type { LiveIndex } from "@/lib/onchain/vaults";
+import type { Constituent } from "@/types/index-fund";
 
 const MAX_TOKENS = 5;
 
 /** One face for a whole collection: the distinct tokens its indexes hold. */
-const toFace = (indexes: IndexFund[]): Constituent[] => {
+const toFace = (indexes: LiveIndex[]): Constituent[] => {
   const seen = new Map<string, Constituent>();
 
   for (const index of indexes) {
@@ -23,7 +24,7 @@ const toFace = (indexes: IndexFund[]): Constituent[] => {
 interface CollectionTileProps {
   href: string;
   title: string;
-  indexes: IndexFund[];
+  indexes: LiveIndex[];
   isActive: boolean;
 }
 
