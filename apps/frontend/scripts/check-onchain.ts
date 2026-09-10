@@ -33,6 +33,9 @@ const run = async () => {
     console.log(`  verified   ${index.isVerifiedResolver}`);
     console.log(`  locked     ${index.isMethodologyLocked}`);
     console.log(`  share      ${index.shareToken ?? "not published"}`);
+    console.log(
+      `  agent      ${index.agent ? `${index.agent.address} scoped to "${index.agent.delegatedKey}"` : "none"}`,
+    );
     console.log(`  desc       ${index.description}`);
 
     for (const constituent of index.constituents) {

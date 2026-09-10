@@ -7,7 +7,9 @@ import {
   PROTOCOL_ROOT,
 } from "./deployments";
 import {
+  type OnchainAgent,
   type OnchainConstituent,
+  readAgent,
   readConstituent,
   readConstituentLabels,
   readIndexAddress,
@@ -42,6 +44,7 @@ export interface OnchainIndex {
   isVerifiedResolver: boolean;
   /** `addr(60)` on the index name itself: the share token it settles in. */
   shareToken: `0x${string}` | null;
+  agent: OnchainAgent | null;
 }
 
 /**
@@ -99,29 +102,36 @@ export const fetchOnchainIndex = async (
     return null;
   }
 
-  const [description, labels, shareToken, isMethodologyLocked, provenance] =
-    await Promise.all([
-      readIndexText(ensName, "description"),
-      readConstituentLabels(ensName),
-      readIndexAddress(ensName),
-      readMethodologyLock(resolver as `0x${string}`),
-      ensClient
-        .readContract({
-          address: ENS_DEPLOYMENT.verifiableFactory,
-          abi: [
-            {
-              type: "function",
-              name: "verifyContract",
-              stateMutability: "view",
-              inputs: [{ name: "proxy", type: "address" }],
-              outputs: [{ name: "implementation", type: "address" }],
-            },
-          ] as const,
-          functionName: "verifyContract",
-          args: [resolver as `0x${string}`],
-        })
-        .catch(() => ZERO_ADDRESS),
-    ]);
+  const [
+    description,
+    labels,
+    shareToken,
+    agent,
+    isMethodologyLocked,
+    provenance,
+  ] = await Promise.all([
+    readIndexText(ensName, "description"),
+    readConstituentLabels(ensName),
+    readIndexAddress(ensName),
+    readAgent(ensName),
+    readMethodologyLock(resolver as `0x${string}`),
+    ensClient
+      .readContract({
+        address: ENS_DEPLOYMENT.verifiableFactory,
+        abi: [
+          {
+            type: "function",
+            name: "verifyContract",
+            stateMutability: "view",
+            inputs: [{ name: "proxy", type: "address" }],
+            outputs: [{ name: "implementation", type: "address" }],
+          },
+        ] as const,
+        functionName: "verifyContract",
+        args: [resolver as `0x${string}`],
+      })
+      .catch(() => ZERO_ADDRESS),
+  ]);
 
   const constituents = await Promise.all(
     labels.map((symbol) => readConstituent(symbol, ensName)),
@@ -137,6 +147,7 @@ export const fetchOnchainIndex = async (
     constituents,
     isMethodologyLocked,
     shareToken: shareToken === ZERO_ADDRESS ? null : shareToken,
+    agent,
     isVerifiedResolver:
       provenance.toLowerCase() ===
       ENS_DEPLOYMENT.permissionedResolverImpl.toLowerCase(),

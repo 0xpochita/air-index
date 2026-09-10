@@ -108,7 +108,7 @@ export const IndexDetailPage = ({ index, onchain }: IndexDetailPageProps) => {
           isLocked={onchain?.isMethodologyLocked ?? index.isMethodologyLocked}
           cid={index.methodologyCid}
         />
-        <RebalancerCard rebalancer={index.rebalancer} ensName={index.ensName} />
+        <RebalancerCard agent={onchain?.agent ?? null} />
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import { permissionedResolverAbi } from "../src/lib/ens/abis/PermissionedResolve
 import { verifiableFactoryAbi } from "../src/lib/ens/abis/VerifiableFactory";
 import { ensClient } from "../src/lib/ens/client";
 import { ENS_DEPLOYMENT } from "../src/lib/ens/deployments";
-import { toDnsEncoded, toNode } from "../src/lib/ens/name";
+import { toNode } from "../src/lib/ens/name";
 import {
   METHODOLOGY_LOCK_BITMAP,
   REGISTRY_ROLE,
@@ -178,30 +178,14 @@ const run = async () => {
     }),
   );
 
-  if (index.rebalancer) {
-    console.log(`\n4. delegate the ${WEIGHT_KEY} key to the rebalancer only`);
-    for (const entry of index.constituents) {
-      await logTx(
-        `authorize ${entry.token.symbol}`,
-        await client.writeContract({
-          address: indexResolver,
-          abi: permissionedResolverAbi,
-          functionName: "authorizeTextRoles",
-          args: [
-            toDnsEncoded(`${entry.token.symbol}.${index.ensName}`),
-            WEIGHT_KEY,
-            index.rebalancer.address,
-            true,
-          ],
-        }),
-      );
-    }
-    console.log(
-      `  agent ${index.rebalancer.address} can set only "${WEIGHT_KEY}"`,
-    );
-  }
+  /**
+   * Delegation lives in `pnpm publish-agent <slug>`. It used to happen here,
+   * against `index.rebalancer.address` from the local catalogue — which granted
+   * the role to a keypair nobody holds. The agent's real address comes from the
+   * environment, so the two cannot drift apart again.
+   */
 
-  console.log("\n5. lock the methodology permanently");
+  console.log("\n4. lock the methodology permanently");
   await logTx(
     "revokeRootRoles",
     await client.writeContract({
@@ -212,7 +196,7 @@ const run = async () => {
     }),
   );
 
-  console.log("\n6. read it all back with stock viem");
+  console.log("\n5. read it all back with stock viem");
   const published = await ensClient.getEnsText({
     name: index.ensName,
     key: CONSTITUENTS_KEY,

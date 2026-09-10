@@ -7,7 +7,16 @@ import { isMethodologyLocked } from "./roles";
 
 const CONSTITUENTS_KEY = "constituents";
 const WEIGHT_KEY = "weight";
+const MANDATE_KEY = "mandate";
+const AGENT_LABEL = "rebalancer";
 const ROOT_RESOURCE = 0n;
+
+export interface OnchainAgent {
+  ensName: string;
+  address: `0x${string}`;
+  mandate: string | null;
+  delegatedKey: string | null;
+}
 
 export interface OnchainConstituent {
   symbol: string;
@@ -106,3 +115,25 @@ export const readResolverProvenance = async (
       args: [resolverAddress],
     })
     .catch(() => null);
+
+/**
+ * The rebalancing agent as a name rather than an address in a role bitmap.
+ * Null means no agent was published, which is a valid state: weights on that
+ * index are set by its owner.
+ */
+export const readAgent = async (
+  indexEnsName: string,
+): Promise<OnchainAgent | null> => {
+  const ensName = toConstituentName(AGENT_LABEL, indexEnsName);
+  const [address, mandate, delegatedKey] = await Promise.all([
+    readIndexAddress(ensName),
+    readIndexText(ensName, MANDATE_KEY),
+    readIndexText(ensName, "delegated-key"),
+  ]);
+
+  if (!address) {
+    return null;
+  }
+
+  return { ensName, address, mandate, delegatedKey };
+};
