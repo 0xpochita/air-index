@@ -17,6 +17,7 @@ import { isDeployed, TOKENS } from "@/lib/tokens/registry";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
 import { isSameSelection, matchTheme } from "../themes";
 import { ConstituentRow } from "./ConstituentRow";
+import { PublishConfirmDialog } from "./PublishConfirmDialog";
 import { type StepDefinition, Stepper } from "./Stepper";
 import { TokenPickerDialog } from "./TokenPickerDialog";
 
@@ -115,6 +116,7 @@ export const IndexBuilderForm = () => {
   /** Touch the token list once and the words stop overruling you. */
   const [isSelectionManual, setIsSelectionManual] = useState(false);
   const [isTransferable, setIsTransferable] = useState(true);
+  const [isConfirming, setIsConfirming] = useState(false);
   const { address, hasProvider, isSepolia, connect, switchNetwork } =
     useWallet();
   const { publish, isPending, error, created, dismiss } = useCreateIndex();
@@ -210,17 +212,11 @@ export const IndexBuilderForm = () => {
   return (
     <form
       className="soft-shell rounded-[1.75rem] bg-surface p-6 sm:p-7"
-      onSubmit={(event) => {
-        event.preventDefault();
-        publish({
-          slug,
-          name,
-          description,
-          symbols: selectedSymbols,
-          weights,
-          transferable: isTransferable,
-        });
-      }}
+      /**
+       * Enter in a text field submits a form. Publishing from here registered a
+       * name the moment someone finished typing it, three steps early.
+       */
+      onSubmit={(event) => event.preventDefault()}
     >
       <header className="flex items-center gap-3.5 border-b border-line pb-5">
         <Image
@@ -412,8 +408,6 @@ export const IndexBuilderForm = () => {
             methodology is a separate, irreversible step on the index page
             afterwards.
           </p>
-
-          {error ? <p className="px-1 text-xs text-negative">{error}</p> : null}
         </div>
       ) : null}
 
@@ -427,7 +421,7 @@ export const IndexBuilderForm = () => {
         </button>
 
         <button
-          type={isLast && address && isSepolia ? "submit" : "button"}
+          type="button"
           onClick={() => {
             if (!isLast) {
               setStep(step + 1);
@@ -439,7 +433,9 @@ export const IndexBuilderForm = () => {
             }
             if (!isSepolia) {
               switchNetwork();
+              return;
             }
+            setIsConfirming(true);
           }}
           disabled={!canAdvance || isPending}
           className={cn(
@@ -452,6 +448,32 @@ export const IndexBuilderForm = () => {
           {publishLabel}
         </button>
       </div>
+
+      <PublishConfirmDialog
+        isOpen={isConfirming && created === null}
+        name={name}
+        ensName={ensName}
+        constituents={selectedSymbols.map((symbol) => ({
+          token: TOKENS[symbol],
+          weightBps: weights[symbol] ?? 0,
+        }))}
+        totalWeightBps={totalWeightBps}
+        isTransferable={isTransferable}
+        owner={address}
+        isPending={isPending}
+        error={error}
+        onConfirm={() =>
+          publish({
+            slug,
+            name,
+            description,
+            symbols: selectedSymbols,
+            weights,
+            transferable: isTransferable,
+          })
+        }
+        onClose={() => setIsConfirming(false)}
+      />
 
       <TxSuccessDialog
         hash={created?.hash ?? null}
@@ -470,6 +492,7 @@ export const IndexBuilderForm = () => {
         detail={`${selectedSymbols.length} constituents · ${formatWeight(totalWeightBps)} allocated`}
         onDismiss={() => {
           const slugToOpen = created?.slug;
+          setIsConfirming(false);
           dismiss();
           if (slugToOpen) {
             router.push(indexHref(slugToOpen));
