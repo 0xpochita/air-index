@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
-import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReturnValue } from "@/components/ui/ReturnValue";
+import { SoftCard } from "@/components/ui/SoftCard";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref, swapHref } from "@/config/navigation";
 import { formatAmount, formatUsd, formatWeight } from "@/lib/format";
@@ -22,21 +22,21 @@ export const HoldingsTable = ({ positions }: HoldingsTableProps) => {
 
   if (positions.length === 0) {
     return (
-      <Card>
-        <CardHeader title="Holdings" />
-        <EmptyState
-          title="No holdings yet"
-          description="Deposit into an index and it will appear here with its unit balance."
-          action={<ButtonLink href="/explore">Explore indexes</ButtonLink>}
-        />
-      </Card>
+      <SoftCard title="Holdings">
+        <div className="soft-inset rounded-[1.35rem] bg-surface-subtle">
+          <EmptyState
+            title="No holdings yet"
+            description="Deposit into an index and it will appear here with its unit balance."
+            action={<ButtonLink href="/explore">Explore indexes</ButtonLink>}
+          />
+        </div>
+      </SoftCard>
     );
   }
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader title="Holdings" />
-      <div className="overflow-x-auto">
+    <SoftCard title="Holdings">
+      <div className="soft-inset overflow-x-auto rounded-[1.35rem] bg-surface-subtle">
         <table className="w-full min-w-[46rem] border-collapse text-left">
           <thead>
             <tr className="border-b border-line">
@@ -127,6 +127,6 @@ export const HoldingsTable = ({ positions }: HoldingsTableProps) => {
           </tbody>
         </table>
       </div>
-    </Card>
+    </SoftCard>
   );
 };

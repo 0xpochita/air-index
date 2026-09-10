@@ -22,7 +22,7 @@ export const PortfolioCover = ({
   const { address } = useWallet();
 
   return (
-    <section className="grid overflow-hidden rounded-xl border border-canvas/70 bg-surface/72 shadow-glass backdrop-blur-xl sm:grid-cols-[14rem_minmax(0,1fr)]">
+    <section className="soft-shell grid overflow-hidden rounded-[1.75rem] bg-surface/90 backdrop-blur-xl sm:grid-cols-[14rem_minmax(0,1fr)]">
       <div className="relative isolate hidden min-h-56 sm:block">
         <Image
           src="/assets/cat-ui-bg-2.jpg"

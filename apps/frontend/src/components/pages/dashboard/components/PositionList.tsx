@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { ButtonLink } from "@/components/ui/Button";
-import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReturnValue } from "@/components/ui/ReturnValue";
+import { SoftCard } from "@/components/ui/SoftCard";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref } from "@/config/navigation";
 import { formatUsd } from "@/lib/format";
@@ -12,25 +12,34 @@ interface PositionListProps {
   positions: PortfolioPosition[];
 }
 
+/** Each position is a link, so each one is a pill — the same pills the hero uses for its actions. */
 export const PositionList = ({ positions }: PositionListProps) => (
-  <Card className="overflow-hidden">
-    <CardHeader title="Positions" />
+  <SoftCard
+    title="Positions"
+    action={
+      positions.length > 0 ? (
+        <span className="text-xs text-ink-subtle">
+          {positions.length === 1 ? "1 index" : `${positions.length} indexes`}
+        </span>
+      ) : null
+    }
+  >
     {positions.length > 0 ? (
-      <ul>
+      <ul className="space-y-2.5">
         {positions.map((position) => (
-          <li key={position.index.slug} className="border-t border-line">
+          <li key={position.index.slug}>
             <Link
               href={indexHref(position.index.slug)}
-              className="flex items-center justify-between gap-4 px-5 py-4 transition-colors duration-150 ease-out hover:bg-surface-hover"
+              className="soft-pill flex items-center justify-between gap-4 rounded-[1.15rem] bg-surface-subtle px-4 py-3.5"
             >
               <span className="flex min-w-0 items-center gap-3">
                 <TokenStack
                   constituents={position.index.constituents}
-                  size="sm"
+                  size="md"
                   maxVisible={3}
                 />
                 <span className="min-w-0">
-                  <span className="block truncate text-sm font-medium text-ink">
+                  <span className="block truncate text-sm font-semibold text-ink">
                     {position.index.name}
                   </span>
                   <span className="block truncate font-mono text-xs text-ink-muted">
@@ -52,11 +61,13 @@ export const PositionList = ({ positions }: PositionListProps) => (
         ))}
       </ul>
     ) : (
-      <EmptyState
-        title="No positions yet"
-        description="Deposit into an index to see it tracked here."
-        action={<ButtonLink href="/explore">Explore indexes</ButtonLink>}
-      />
+      <div className="soft-inset rounded-[1.35rem] bg-surface-subtle">
+        <EmptyState
+          title="No positions yet"
+          description="Deposit into an index to see it tracked here."
+          action={<ButtonLink href="/explore">Explore indexes</ButtonLink>}
+        />
+      </div>
     )}
-  </Card>
+  </SoftCard>
 );
