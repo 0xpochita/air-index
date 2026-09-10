@@ -10,6 +10,7 @@ import {
   type OnchainConstituent,
   readConstituent,
   readConstituentLabels,
+  readIndexAddress,
   readIndexText,
   readMethodologyLock,
 } from "./read";
@@ -39,6 +40,8 @@ export interface OnchainIndex {
   constituents: OnchainConstituent[];
   isMethodologyLocked: boolean | null;
   isVerifiedResolver: boolean;
+  /** `addr(60)` on the index name itself: the share token it settles in. */
+  shareToken: `0x${string}` | null;
 }
 
 /**
@@ -96,10 +99,11 @@ export const fetchOnchainIndex = async (
     return null;
   }
 
-  const [description, labels, isMethodologyLocked, provenance] =
+  const [description, labels, shareToken, isMethodologyLocked, provenance] =
     await Promise.all([
       readIndexText(ensName, "description"),
       readConstituentLabels(ensName),
+      readIndexAddress(ensName),
       readMethodologyLock(resolver as `0x${string}`),
       ensClient
         .readContract({
@@ -132,6 +136,7 @@ export const fetchOnchainIndex = async (
     expiry: expiry as bigint,
     constituents,
     isMethodologyLocked,
+    shareToken: shareToken === ZERO_ADDRESS ? null : shareToken,
     isVerifiedResolver:
       provenance.toLowerCase() ===
       ENS_DEPLOYMENT.permissionedResolverImpl.toLowerCase(),

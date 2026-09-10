@@ -1,13 +1,21 @@
 import assert from "node:assert/strict";
+import { formatUnits } from "viem";
+import { indexVaultAbi } from "../src/lib/onchain/abis";
 import { loadEnv } from "./lib/env";
+import { publicClient } from "./lib/wallet";
 
 loadEnv();
+
+const ONE_WHOLE_QUOTE = 1_000_000n;
 
 const run = async () => {
   const { fetchOnchainIndex, listPublishedSlugs } = await import(
     "../src/lib/ens/indexes"
   );
+  const { SETTLEMENT_SYMBOL } = await import("../src/lib/mock/quotes");
+  const { TOKENS } = await import("../src/lib/mock/tokens");
 
+  const quote = TOKENS[SETTLEMENT_SYMBOL];
   const slugs = await listPublishedSlugs();
   console.log(`published slugs: ${slugs.join(", ") || "(none)"}`);
   assert.ok(
@@ -24,6 +32,7 @@ const run = async () => {
     console.log(`  resolver   ${index.resolver}`);
     console.log(`  verified   ${index.isVerifiedResolver}`);
     console.log(`  locked     ${index.isMethodologyLocked}`);
+    console.log(`  share      ${index.shareToken ?? "not published"}`);
     console.log(`  desc       ${index.description}`);
 
     for (const constituent of index.constituents) {
@@ -34,6 +43,16 @@ const run = async () => {
         constituent.weightBps,
         `${constituent.ensName} must resolve a weight`,
       );
+
+      if (constituent.address) {
+        const code = await publicClient.getCode({
+          address: constituent.address,
+        });
+        assert.ok(
+          code && code !== "0x",
+          `${constituent.ensName} resolves to ${constituent.address}, which has no bytecode on Sepolia`,
+        );
+      }
     }
 
     const total = index.constituents.reduce(
@@ -42,6 +61,56 @@ const run = async () => {
     );
     console.log(`  weights    ${total} bps`);
     assert.equal(total, 10_000, "published weights must total 100%");
+
+    if (!index.shareToken) {
+      console.log("  vault      skipped, run pnpm wire-index to publish one");
+      continue;
+    }
+
+    const [vaultQuote, sharePrice, shares] = await Promise.all([
+      publicClient.readContract({
+        address: index.shareToken,
+        abi: indexVaultAbi,
+        functionName: "quote",
+      }),
+      publicClient.readContract({
+        address: index.shareToken,
+        abi: indexVaultAbi,
+        functionName: "sharePrice",
+      }),
+      publicClient.readContract({
+        address: index.shareToken,
+        abi: indexVaultAbi,
+        functionName: "previewDeposit",
+        args: [ONE_WHOLE_QUOTE],
+      }),
+    ]);
+
+    const returned = await publicClient.readContract({
+      address: index.shareToken,
+      abi: indexVaultAbi,
+      functionName: "previewRedeem",
+      args: [shares],
+    });
+
+    console.log(
+      `  vault      ${formatUnits(sharePrice, quote.decimals)} m${SETTLEMENT_SYMBOL.toUpperCase()} per share`,
+    );
+    console.log(
+      `  roundtrip  ${formatUnits(ONE_WHOLE_QUOTE, quote.decimals)} in, ${formatUnits(returned, quote.decimals)} out`,
+    );
+
+    assert.equal(
+      vaultQuote.toLowerCase(),
+      quote.address.toLowerCase(),
+      "the vault must settle in the deployed quote token",
+    );
+    assert.ok(shares > 0n, "a whole quote unit must buy a non-zero share");
+    /** Rounding may only ever favour the vault, or it can be drained by looping. */
+    assert.ok(
+      returned <= ONE_WHOLE_QUOTE,
+      "a deposit and redeem round trip must never return more than it took",
+    );
   }
 
   console.log("\nonchain read layer: PASS");

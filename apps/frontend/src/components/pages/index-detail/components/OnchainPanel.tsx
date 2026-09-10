@@ -9,6 +9,8 @@ import { SITE } from "@/config/site";
 import type { OnchainIndex } from "@/lib/ens/indexes";
 import { truncateAddress } from "@/lib/format";
 
+const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
+
 interface OnchainPanelProps {
   onchain: OnchainIndex;
 }
@@ -40,6 +42,23 @@ export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
       <div className="flex items-center justify-between gap-4">
         <dt className="text-ink-subtle">Constituents</dt>
         <dd className="tabular-nums text-ink">{onchain.constituents.length}</dd>
+      </div>
+      <div className="flex items-center justify-between gap-4">
+        <dt className="text-ink-subtle">Share token</dt>
+        <dd className="font-mono text-xs text-ink">
+          {onchain.shareToken ? (
+            <a
+              href={`${EXPLORER_ADDRESS}${onchain.shareToken}`}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-accent"
+            >
+              {truncateAddress(onchain.shareToken)}
+            </a>
+          ) : (
+            <span className="text-ink-muted">Not published</span>
+          )}
+        </dd>
       </div>
       <div className="flex items-center justify-between gap-4">
         <dt className="text-ink-subtle">Resolver provenance</dt>
