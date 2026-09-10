@@ -4,6 +4,7 @@ import {
   ChartPieSliceIcon,
   CompassIcon,
   HouseIcon,
+  MagnifyingGlassIcon,
   PlusCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -19,6 +20,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { href: "/swap", label: "Swap", icon: ArrowsLeftRightIcon },
   { href: "/create", label: "Create", icon: PlusCircleIcon },
   { href: "/portfolio", label: "Portfolio", icon: ChartPieSliceIcon },
+  { href: "/resolve", label: "Resolve", icon: MagnifyingGlassIcon },
 ];
 
 export const indexHref = (slug: string): string => `/indexes/${slug}`;

@@ -1,8 +1,11 @@
+import { ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { formatWeight, truncateAddress } from "@/lib/format";
 import type { Constituent } from "@/types/index-fund";
 
 const HEADER_CLASS = "px-5 py-3 text-xs font-medium text-ink-subtle";
+const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
 
 interface ConstituentTableProps {
   constituents: Constituent[];
@@ -50,11 +53,32 @@ export const ConstituentTable = ({
                 </span>
               </span>
             </td>
-            <td className="px-5 py-4 font-mono text-xs text-ink-muted">
-              {`${constituent.token.symbol}.${ensName}`}
+            <td className="px-5 py-4">
+              {/*
+               * Not a link: no explorer renders an ENSv2 beta name yet, and a
+               * dead link on the page that proves the name resolves would
+               * argue against itself. Copy it into any ENS library instead.
+               */}
+              <span className="flex items-center gap-1">
+                <span className="font-mono text-xs text-ink-muted">
+                  {`${constituent.token.symbol}.${ensName}`}
+                </span>
+                <CopyButton
+                  value={`${constituent.token.symbol}.${ensName}`}
+                  label="Copy ENS name"
+                />
+              </span>
             </td>
-            <td className="px-5 py-4 font-mono text-xs text-ink-muted">
-              {truncateAddress(constituent.token.address)}
+            <td className="px-5 py-4">
+              <a
+                href={`${EXPLORER_ADDRESS}${constituent.token.address}`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1.5 font-mono text-xs text-ink-muted transition-colors duration-150 ease-out hover:text-accent"
+              >
+                {truncateAddress(constituent.token.address)}
+                <ArrowSquareOutIcon size={11} aria-hidden />
+              </a>
             </td>
             <td className="px-5 py-4 text-right">
               <span className="text-sm font-semibold tabular-nums text-ink">

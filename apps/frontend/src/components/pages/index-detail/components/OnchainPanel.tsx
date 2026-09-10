@@ -1,14 +1,15 @@
 import {
-  BroadcastIcon,
   LinkSimpleIcon,
   LockSimpleIcon,
   SealCheckIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { TokenIcon } from "@/components/ui/TokenIcon";
 import { SITE } from "@/config/site";
 import { truncateAddress } from "@/lib/format";
 import type { LiveIndex } from "@/lib/onchain/vaults";
+import { TOKENS } from "@/lib/tokens/registry";
 import { LockMethodologyButton } from "./LockMethodologyButton";
 
 const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
@@ -23,7 +24,7 @@ export const OnchainPanel = ({ index: onchain }: OnchainPanelProps) => (
       title="Onchain state"
       action={
         <Badge tone="positive">
-          <BroadcastIcon size={12} weight="fill" aria-hidden />
+          <TokenIcon token={TOKENS.eth} size="sm" className="size-3.5 ring-0" />
           {`Live on ${SITE.network}`}
         </Badge>
       }
