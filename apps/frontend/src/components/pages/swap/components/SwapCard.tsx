@@ -15,7 +15,8 @@ import { useWallet } from "@/lib/onchain/WalletProvider";
 import type { SwapMode, Token } from "@/types/index-fund";
 import { useSwapForm } from "../hooks/useSwapForm";
 import { AmountPanel } from "./AmountPanel";
-import { AssetChip, AssetSelect } from "./AssetSelect";
+import { AssetChip } from "./AssetChip";
+import { IndexSelect } from "./IndexSelect";
 import { ModeTabs } from "./ModeTabs";
 import { SwapConfirmDialog } from "./SwapConfirmDialog";
 import { SwapSummary } from "./SwapSummary";
@@ -47,10 +48,6 @@ const SUCCESS_TITLE: Record<string, string> = {
   swap: "Swap confirmed",
   faucet: "Test tokens minted",
 };
-
-const ensLabel = (name: string) => (
-  <span className="font-mono text-[13px] font-medium">{name}</span>
-);
 
 interface Leg {
   amount: number;
@@ -114,35 +111,19 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
   );
 
   const indexControl = (
-    <AssetSelect
-      icon={indexIcon}
-      label={ensLabel(live.ensName)}
+    <IndexSelect
+      value={live}
+      options={liveIndexes}
       fieldLabel="Index"
-      value={live.slug}
-      options={liveIndexes.map((entry) => ({
-        value: entry.slug,
-        label: entry.name,
-      }))}
       onChange={setSlug}
     />
   );
 
   const alternateControl = alternate ? (
-    <AssetSelect
-      icon={
-        <TokenStack
-          constituents={alternate.constituents}
-          size="sm"
-          maxVisible={2}
-        />
-      }
-      label={ensLabel(alternate.ensName)}
+    <IndexSelect
+      value={alternate}
+      options={others}
       fieldLabel="Index to receive"
-      value={alternate.slug}
-      options={others.map((entry) => ({
-        value: entry.slug,
-        label: entry.name,
-      }))}
       onChange={setAlternateSlug}
     />
   ) : (
