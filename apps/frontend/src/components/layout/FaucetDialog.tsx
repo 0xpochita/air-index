@@ -11,7 +11,11 @@ import { isDeployed, TOKENS } from "@/lib/mock/tokens";
 import { toFloat } from "@/lib/onchain/PortfolioProvider";
 import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import { useWallet } from "@/lib/onchain/WalletProvider";
-import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
+import {
+  TOKEN_SYMBOLS,
+  type Token,
+  type TokenSymbol,
+} from "@/types/index-fund";
 
 /** Only symbols with a real Sepolia deployment can be minted. */
 const FAUCET_TOKENS = TOKEN_SYMBOLS.map((symbol) => TOKENS[symbol]).filter(
@@ -27,7 +31,7 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { address, isSepolia, epoch, connect } = useWallet();
   const { faucet, pending, error, last, dismiss } = useVaultActions();
-  const [minted, setMinted] = useState<string | null>(null);
+  const [minted, setMinted] = useState<Token | null>(null);
   const [balances, setBalances] = useState<
     Partial<Record<TokenSymbol, bigint>>
   >({});
@@ -142,7 +146,7 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
                   <button
                     type="button"
                     onClick={() => {
-                      setMinted(`1,000 m${token.symbol.toUpperCase()}`);
+                      setMinted(token);
                       faucet(token.address);
                     }}
                     disabled={pending !== null}
@@ -179,7 +183,8 @@ export const FaucetDialog = ({ triggerClassName }: FaucetDialogProps) => {
       <TxSuccessDialog
         hash={last?.hash ?? null}
         title="Test tokens minted"
-        detail={minted}
+        icon={minted ? <TokenIcon token={minted} size="lg" /> : null}
+        detail={minted ? `1,000 m${minted.symbol.toUpperCase()}` : null}
         onDismiss={dismiss}
       />
     </>

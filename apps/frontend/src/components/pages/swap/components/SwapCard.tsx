@@ -14,7 +14,7 @@ import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import { useVaultActions } from "@/lib/onchain/useVaultActions";
 import type { LiveIndex } from "@/lib/onchain/vaults";
 import { useWallet } from "@/lib/onchain/WalletProvider";
-import type { SwapMode } from "@/types/index-fund";
+import type { SwapMode, Token } from "@/types/index-fund";
 import { useSwapForm } from "../hooks/useSwapForm";
 import { AmountPanel } from "./AmountPanel";
 import { AssetChip, AssetSelect } from "./AssetSelect";
@@ -47,6 +47,14 @@ const MODE_ACTION: Record<SwapMode, string> = {
   redeem: "Redeem",
 };
 
+/**
+ * What the transaction produced, captured on click. Reading the form when the
+ * dialog renders would let an edit made mid-flight rewrite the receipt.
+ */
+type Receipt =
+  | { kind: "index"; summary: string; live: LiveIndex }
+  | { kind: "token"; summary: string; token: Token };
+
 interface SwapCardProps {
   live: LiveIndex;
   liveIndexes: LiveIndex[];
@@ -60,7 +68,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
 
   const others = liveIndexes.filter((entry) => entry.slug !== live.slug);
   const [alternateSlug, setAlternateSlug] = useState(others[0]?.slug ?? "");
-  const [receiptSummary, setReceiptSummary] = useState<string | null>(null);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const alternate =
     others.find((entry) => entry.slug === alternateSlug) ?? others[0];
 
@@ -127,13 +135,12 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       return;
     }
 
-    /**
-     * Captured on click rather than read when the dialog renders, so editing
-     * the field while a transaction is in flight cannot rewrite the receipt.
-     */
-    setReceiptSummary(
-      `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`,
-    );
+    setReceipt({
+      kind: "index",
+      summary: `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`,
+      /** Swap hands you the other index; deposit and redeem both act on this one. */
+      live: form.mode === "swap" && alternate ? alternate : live,
+    });
 
     if (form.mode === "deposit") {
       actions.deposit(live.vault, form.payAmountWei);
@@ -245,7 +252,11 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
             <button
               type="button"
               onClick={() => {
-                setReceiptSummary(`1,000 ${form.quoteSymbol}`);
+                setReceipt({
+                  kind: "token",
+                  summary: `1,000 ${form.quoteSymbol}`,
+                  token: form.quote,
+                });
                 actions.faucet(form.quote.address);
               }}
               disabled={isBusy}
@@ -269,7 +280,19 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
         title={
           SUCCESS_TITLE[actions.last?.label ?? ""] ?? "Transaction confirmed"
         }
-        detail={receiptSummary}
+        icon={
+          receipt?.kind === "token" ? (
+            <TokenIcon token={receipt.token} size="lg" />
+          ) : (
+            <TokenStack
+              constituents={receipt?.live.fund.constituents ?? []}
+              size="lg"
+              maxVisible={4}
+            />
+          )
+        }
+        ensName={receipt?.kind === "index" ? receipt.live.ensName : null}
+        detail={receipt?.summary}
         onDismiss={actions.dismiss}
       />
     </div>
