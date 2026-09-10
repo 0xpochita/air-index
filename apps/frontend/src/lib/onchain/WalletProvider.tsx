@@ -35,6 +35,7 @@ interface WalletContextValue {
   /** Bumped after every write so balance hooks know to read again. */
   epoch: number;
   connect: () => Promise<void>;
+  disconnect: () => Promise<void>;
   switchNetwork: () => Promise<void>;
   refresh: () => void;
   getWalletClient: () => WalletClient<Transport, Chain, Account>;
@@ -44,6 +45,33 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 const toMessage = (error: unknown): string =>
   error instanceof Error ? error.message : "Wallet request failed";
+
+/**
+ * EIP-1193 has no disconnect. A wallet the user approved keeps answering
+ * `eth_accounts` forever, so "disconnected" has to be remembered here or the
+ * next page load silently reconnects them.
+ */
+const DISCONNECTED_KEY = "airindex.wallet.disconnected";
+
+const isOptedOut = (): boolean => {
+  try {
+    return globalThis.localStorage?.getItem(DISCONNECTED_KEY) === "1";
+  } catch {
+    return false;
+  }
+};
+
+const setOptedOut = (value: boolean) => {
+  try {
+    if (value) {
+      globalThis.localStorage?.setItem(DISCONNECTED_KEY, "1");
+    } else {
+      globalThis.localStorage?.removeItem(DISCONNECTED_KEY);
+    }
+  } catch {
+    return;
+  }
+};
 
 export const WalletProvider = ({ children }: { children: ReactNode }) => {
   const [address, setAddress] = useState<`0x${string}` | null>(null);
@@ -76,10 +104,12 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       setAddress((accounts[0] as `0x${string}`) ?? null);
     };
 
-    provider
-      .request({ method: "eth_accounts" })
-      .then((accounts) => syncAccounts(accounts as string[]))
-      .catch(() => undefined);
+    if (!isOptedOut()) {
+      provider
+        .request({ method: "eth_accounts" })
+        .then((accounts) => syncAccounts(accounts as string[]))
+        .catch(() => undefined);
+    }
     readChainId(provider).catch(() => undefined);
 
     const onAccountsChanged = (accounts: never) => {
@@ -110,6 +140,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
 
     setIsConnecting(true);
     setError(null);
+    setOptedOut(false);
 
     try {
       const accounts = (await provider.request({
@@ -123,6 +154,25 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       setIsConnecting(false);
     }
   }, [readChainId]);
+
+  /**
+   * Revoking the permission is best effort: only some wallets implement it, and
+   * the ones that do will prompt again on the next connect, which is what
+   * "disconnect" should mean. The local opt out is what actually holds.
+   */
+  const disconnect = useCallback(async () => {
+    setOptedOut(true);
+    setAddress(null);
+    setError(null);
+    refresh();
+
+    await getInjectedProvider()
+      ?.request({
+        method: "wallet_revokePermissions",
+        params: [{ eth_accounts: {} }],
+      })
+      .catch(() => undefined);
+  }, [refresh]);
 
   const switchNetwork = useCallback(async () => {
     const provider = getInjectedProvider();
@@ -168,6 +218,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       error,
       epoch,
       connect,
+      disconnect,
       switchNetwork,
       refresh,
       getWalletClient,
@@ -180,6 +231,7 @@ export const WalletProvider = ({ children }: { children: ReactNode }) => {
       error,
       epoch,
       connect,
+      disconnect,
       switchNetwork,
       refresh,
       getWalletClient,
