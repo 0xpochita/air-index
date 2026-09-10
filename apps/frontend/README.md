@@ -1,36 +1,54 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Air Index — frontend
 
-## Getting Started
+The app and the scripts that publish the protocol. Full documentation lives in
+the [repository README](../../README.md).
 
-First, run the development server:
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env     # RPC + throwaway keys; the registry address is written by bootstrap
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). It reads the live Sepolia
+deployment out of the box — connect a wallet, mint from the navbar faucet, and
+deposit. Or use [air-index-ens.vercel.app](https://air-index-ens.vercel.app),
+which runs against the same contracts.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Everything under `scripts/` signs with a key from `.env` and never runs in the
+browser. Publishing an index does not appear here: that happens at `/create`,
+signed by the visitor's own wallet.
 
-## Learn More
+| Command | What it does |
+|---|---|
+| `pnpm prove` | 17 assertions against Sepolia — every claim the ENS track asks about |
+| `pnpm check:ens` | Role constants, encodings, one live wildcard read |
+| `pnpm check:onchain` | Every published index: weights, bytecode, ownership, vault round trip |
+| `pnpm probe:w1` · `w2` · `w3` | Wildcard, methodology lock, scoped delegation |
+| `pnpm bootstrap` | Registers `airindex.eth` and the protocol registry. One time |
+| `pnpm deploy-registrar` | The contract that lends `REGISTER` to anyone. One time |
+| `pnpm deploy-tokens [csv\|all]` | Mock ERC20s for the constituents you need |
+| `pnpm wire-index <slug>` | Share token, published as `addr(60)` on the index name |
+| `pnpm publish-agent <slug> [--revoke]` | Agent namespace and its record-scoped key |
+| `pnpm rebalance <name> <sym> <bps>` | Signs as the agent, not the owner |
+| `pnpm set-alias <alias> <target>` | Tickers and mirrors |
+| `pnpm mirror-namespace [label]` | Namespace aliasing across the registry |
+| `pnpm forever-name <slug> [label]` | Max expiry, root roles burnt |
 
-To learn more about Next.js, take a look at the following resources:
+## Layout
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/app/          routes
+src/components/   ui, one directory per page
+src/lib/ens/      deployments, roles, reads, resolution — the ENSv2 surface
+src/lib/onchain/  wallet, portfolio, vault actions, index publication
+scripts/          everything that signs with a key from .env
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Two traps worth knowing: Next does not reload env vars without a restart, so a
+dev server started before `bootstrap` will not see the registry. And public RPCs
+cap `eth_getLogs` at 50k blocks, which is why the deploy block is recorded and
+the index listing query is bounded by it.

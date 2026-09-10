@@ -92,18 +92,20 @@ Wildcards make a 30-asset index as cheap as a 2-asset one. Registered entries ma
 ### Decision flow when publishing an index
 
 ```
-create-index <slug> [--soulbound]
+registrar.create(label, records, transferable)      ← from /create, one transaction
   ├─ deploy a Permissioned Resolver proxy for this index alone
-  ├─ register <slug>          (CAN_TRANSFER_ADMIN omitted → soulbound, permanently)
-  ├─ multicall
+  ├─ initialize(caller, roles, records)   ← records run with access control bypassed
   │    ├─ setAddr / setText per constituent   ← wildcard, no registration
   │    ├─ setText(constituents)               ← enumeration lifeline
   │    └─ setContenthash(methodology)
-  └─ revokeRootRoles(CONTENTHASH | CLEAR | UPGRADE)   ← irreversible
+  └─ register(label, msg.sender, …)  (transferable=false omits CAN_TRANSFER_ADMIN,
+                                      permanently — the choice exists for one transaction)
 
 wire-index <slug>       → share token + addr records
 publish-agent <slug>    → agent name + scoped weight key
 ```
+
+The methodology lock is a separate, later transaction by the owner: `revokeRootRoles(CONTENTHASH | CLEAR | UPGRADE)`, irreversible.
 
 ---
 
@@ -119,11 +121,15 @@ publish-agent <slug>    → agent name + scoped weight key
 - **Namespace Aliasing (mirrors)**: `funds.airindex.eth` shares the Air Index registry, so every index appears under a second name as the same ERC-1155 entry
 - **Soulbound Indexes**: `--soulbound` omits `CAN_TRANSFER_ADMIN`, which cannot be granted afterwards — the choice exists for exactly one transaction
 - **Forever Names with No Parent Control**: max-uint64 expiry in a registry whose root roles were revoked after one registration; the deployer is refused when it tries to register again
+- **Permissionless Publication**: `AirIndexRegistrar` holds the registry's `REGISTER` role and lends it to anyone — a stranger who calls the registry directly is refused, and the same stranger publishing through the registrar succeeds
+- **Publish From the Browser**: resolver proxy, registration and every constituent record in **one transaction**, signed by the visitor's own wallet — the owner of the name is whoever published it, never the deployer
+- **Resolve Any Name In-App**: `/resolve`, and a lookup beside every name in the product, reading through the Universal Resolver and reporting *why* a name resolves — registry entry or wildcard
 - **Real Settlement**: `IndexVault` share tokens, published as `addr(60)` on the index name — the app resolves the name to find the fund and hardcodes no vault address anywhere
 - **In-App Testnet Faucet**: 14 mock ERC20s mintable from the navbar, so a judge can fund a wallet without a script
 - **Deposit / Redeem / Swap**: real transactions against real contracts, with the preview and the receipt both read from the vault that settles them
 - **Onchain-First UI**: constituents, weights, lock state, resolver provenance, share token, ownership and expiry all resolved from names — the local catalogue supplies only what ENS has no opinion about
 - **Two Runnable Gates**: `check:ens` (constants, encodings, one live wildcard read) and `check:onchain` (weights total 10,000 bps, every resolved address has bytecode, vault round trip never returns more than it took)
+- **One Command That Proves It**: `pnpm prove` — 17 assertions covering every claim above, read live from Sepolia, including the negative cases
 
 ---
 
@@ -135,7 +141,7 @@ publish-agent <slug>    → agent name + scoped weight key
 | Naming | ENSv2 beta on Sepolia — Permissioned Registry, Permissioned Resolver, Enhanced Access Control, Universal Resolver V2 |
 | Wallet Integration | viem 2.56 + raw EIP-1193 (no connector library) |
 | Blockchain | Ethereum Sepolia (chainId 11155111) |
-| Smart Contracts | `MockERC20`, `IndexVault` (Solidity 0.8.28, Foundry, zero dependencies) |
+| Smart Contracts | `MockERC20`, `IndexVault`, `AirIndexRegistrar` (Solidity 0.8.28, Foundry, zero dependencies) |
 | Proxies | ENS Verifiable Factory (`deployProxy` + `verifyContract`) |
 | Scripts | tsx + viem, private keys confined to `scripts/` |
 | Animation | Motion (Framer Motion) |
@@ -156,7 +162,11 @@ Air Index is built directly on the **Permissioned Registry**, **Permissioned Res
 | **Index Discovery** | [`src/lib/ens/indexes.ts`](apps/frontend/src/lib/ens/indexes.ts) | `LabelRegistered` logs bounded by the recorded deploy block, then resolver, owner, expiry, share token, agent, lock state and factory provenance per index |
 | **Name Encoding** | [`src/lib/ens/name.ts`](apps/frontend/src/lib/ens/name.ts) | `normalize` before hashing, namehash for record setters, DNS encoding for `authorize*` and `setAlias` — mixing the two authorizes the wrong resource silently |
 | **Protocol Bootstrap** | [`scripts/bootstrap.ts`](apps/frontend/scripts/bootstrap.ts) | Mints MockUSDC, commits and registers `airindex.eth`, deploys the protocol resolver + AirIndexRegistry as factory proxies, `setParent`, then revokes `SET_PARENT` in the same run |
-| **Index Publication** | [`scripts/create-index.ts`](apps/frontend/scripts/create-index.ts) | Resolver proxy → register (`--soulbound` omits `CAN_TRANSFER_ADMIN`) → one multicall for every constituent record → `revokeRootRoles` |
+| **Permissionless Registrar** | [`contracts/src/AirIndexRegistrar.sol`](apps/contracts/src/AirIndexRegistrar.sol) | Holds `REGISTER` on the Air Index registry and lends it to any caller. Deploys the resolver proxy, runs the caller's record writes through `initialize` — where access control is bypassed by design — and registers the label to `msg.sender`. One transaction, no allowlist |
+| **Registrar Deployment** | [`scripts/deploy-registrar.ts`](apps/frontend/scripts/deploy-registrar.ts) | Deploys the registrar and grants it `REGISTER` on the registry, once |
+| **Index Publication** | [`src/lib/onchain/useCreateIndex.ts`](apps/frontend/src/lib/onchain/useCreateIndex.ts) | Publication from the browser: `buildRecords` encodes every constituent's `addr` and `weight`, the enumeration list and the methodology, then one `create(label, records, transferable)` signed by the visitor's wallet. The index is owned by whoever published it |
+| **Name Resolution** | [`src/lib/ens/resolve.ts`](apps/frontend/src/lib/ens/resolve.ts) | `findResolver` through the Universal Resolver, then address and text records, then a registry read that decides whether the name is an entry or a wildcard — depth alone answers it, because an index is registered with no subregistry |
+| **Track Proof** | [`scripts/prove.ts`](apps/frontend/scripts/prove.ts) | 17 assertions against Sepolia at the moment it runs, positive and negative, covering every claim in this README |
 | **Agent Namespace** | [`scripts/publish-agent.ts`](apps/frontend/scripts/publish-agent.ts) | Publishes `rebalancer.<index>`, scopes `weight` per constituent via `authorizeTextRoles`, grants the agent `mandate` on its own name, then **simulates the agent** to prove `weight` is allowed and `addr` / `description` are refused. `--revoke` reverses it and asserts the refusal |
 | **Scoped Rebalance** | [`scripts/rebalance.ts`](apps/frontend/scripts/rebalance.ts) | Signs as the **agent**, not the owner, so a successful run is itself the evidence that record-scoped delegation holds. Asserts the index stays at 10,000 bps |
 | **Tickers and Mirrors** | [`scripts/set-alias.ts`](apps/frontend/scripts/set-alias.ts) | Record aliasing. Tickers and mirrors are one primitive: register the alias onto the *target's* resolver, then `setAlias` there |
@@ -194,26 +204,26 @@ Air Index is built directly on the **Permissioned Registry**, **Permissioned Res
 ```mermaid
 sequenceDiagram
     participant Creator
-    participant Scripts as Air Index Scripts
+    participant Registrar as AirIndexRegistrar
     participant Registry as AirIndexRegistry
     participant Resolver as IndexResolver (per index)
     participant Agent as Rebalancer Agent
     participant UR as Universal Resolver V2
     participant App as Frontend / any ENS client
 
-    Creator->>Scripts: create-index big-five --soulbound?
-    Scripts->>Resolver: 1. VerifiableFactory.deployProxy
-    Scripts->>Registry: 2. register(big-five, roles, expiry)
-    Scripts->>Resolver: 3. multicall(setAddr + setText per constituent,<br/>constituents list, contenthash)
-    Scripts->>Resolver: 4. revokeRootRoles(CONTENTHASH|CLEAR|UPGRADE)
+    Creator->>Registrar: create(big-five, records, transferable)
+    Registrar->>Resolver: 1. VerifiableFactory.deployProxy
+    Registrar->>Resolver: 2. initialize(creator, roles,<br/>setAddr + setText per constituent,<br/>constituents list, contenthash)
+    Registrar->>Registry: 3. register(big-five, creator, roles, expiry)
+    Note over Registry: the creator owns the name, not the deployer
+
+    Creator->>Resolver: revokeRootRoles(CONTENTHASH|CLEAR|UPGRADE)
     Note over Resolver: methodology is now immutable
 
-    Creator->>Scripts: wire-index big-five
-    Scripts->>Resolver: setAddr(big-five) = IndexVault
+    Creator->>Resolver: wire-index — setAddr(big-five) = IndexVault
 
-    Creator->>Scripts: publish-agent big-five
-    Scripts->>Resolver: setAddr/setText on rebalancer.big-five
-    Scripts->>Resolver: authorizeTextRoles("weight", agent, true)
+    Creator->>Resolver: publish-agent — setAddr/setText on rebalancer.big-five
+    Creator->>Resolver: authorizeTextRoles("weight", agent, true)
 
     loop Rebalance
       Agent->>Resolver: setText(weight) — allowed
@@ -304,8 +314,9 @@ Or skip the setup entirely: **[air-index-ens.vercel.app](https://air-index-ens.v
 pnpm check:ens                          # constants, encodings, one live wildcard read
 pnpm probe:w1 && pnpm probe:w2          # the two gates that decide the architecture
 pnpm bootstrap                          # registers airindex.eth, one time, idempotent
+pnpm deploy-registrar                   # lends REGISTER to anyone, one time
 pnpm deploy-tokens [csv|all]            # mock ERC20s for the constituents you need
-pnpm create-index <slug> [--soulbound]
+# indexes are published from the browser at /create — one transaction, your wallet owns it
 pnpm wire-index <slug>                  # share token + addr records
 pnpm publish-agent <slug> [--revoke]    # agent namespace + scoped weight key
 pnpm set-alias <alias> <targetSlug>     # tickers and mirrors
@@ -313,6 +324,7 @@ pnpm mirror-namespace [label]           # namespace aliasing across the whole re
 pnpm forever-name <slug> [label]        # max expiry, root roles burnt
 pnpm rebalance <index.eth> <sym> <bps>  # signs as the agent
 pnpm check:onchain                      # the full gate
+pnpm prove                              # 17 assertions, every claim in this README
 ```
 
 > **Two traps worth knowing.** Next does not reload env vars without a restart, so a dev server started before `bootstrap` will not see the registry. And public RPCs reject `eth_getLogs` from genesis at a 50k block cap, which is why the deploy block is recorded and the listing query is bounded by it.
@@ -327,7 +339,7 @@ pnpm check:onchain                      # the full gate
 Publish index → Lock methodology → Wire settlement → Delegate an agent
 ```
 
-1. **Publish** — one resolver proxy, one registration, one multicall carrying every constituent's address and weight, the enumeration list, and the methodology contenthash
+1. **Publish** — from `/create` in the browser, in a single transaction: one resolver proxy, one registration, and every constituent's address and weight, the enumeration list and the methodology contenthash carried as records. The registrar lends its `REGISTER` role to the caller, so the name belongs to the wallet that signed — not to whoever deployed the protocol
 2. **Lock** — `revokeRootRoles` burns contenthash, clear and upgrade together; `roleCount(0)` reads zero forever after
 3. **Wire** — deploy the `IndexVault` share token and publish it as `addr(60)` on the index name, so resolving the name *is* finding the fund
 4. **Delegate** — publish `rebalancer.<index>` and scope the `weight` key to it; the script proves the scope by simulating the refusals
@@ -369,19 +381,22 @@ await client.getEnsText({ name: "rebalancer.big-five.airindex.eth", key: "mandat
 // 'Reset every constituent to a 20.00% target allocation each month.'
 ```
 
+The app offers the same lookup rather than asking anyone to open a terminal: `/resolve` takes any name under the root, and every ENS name printed in the product carries a magnifier that resolves it in place. Both call exactly the two functions above. The only thing the app adds is *why* the name resolved — it reads `findOwner` and `getSubregistry` on the registry to report whether the name is a registry entry or a wildcard answered by the resolver above it.
+
 ### On-Chain Flow
 
 ```
-Creator                     AirIndexRegistry            IndexResolver            Agent
-   │                              │                          │                     │
-   ├── deployProxy ───────────────┼─────────────────────────►│ (factory verified)  │
-   ├── register(slug, roles) ────►│ ERC-1155 entry           │                     │
-   ├── multicall(records) ────────┼─────────────────────────►│ wildcard subnames   │
-   ├── revokeRootRoles ───────────┼─────────────────────────►│ methodology LOCKED  │
-   ├── setAddr(slug) = vault ─────┼─────────────────────────►│                     │
-   ├── authorizeTextRoles ────────┼─────────────────────────►│◄── weight only ─────┤
-   │                              │                          │                     │
-   ◄── anyone: getEnsText / getEnsAddress via Universal Resolver ─────────────────►
+Creator          AirIndexRegistrar      AirIndexRegistry       IndexResolver        Agent
+   │                     │                     │                     │                │
+   ├── create(label, records, transferable) ───┼────────────────────►│                │
+   │                     ├── deployProxy ──────┼────────────────────►│ (factory verified)
+   │                     ├── initialize(records) ───────────────────►│ wildcard subnames
+   │                     └── register(label, creator) ─►│ ERC-1155 entry, creator owns │
+   ├── revokeRootRoles ──┼─────────────────────┼────────────────────►│ methodology LOCKED
+   ├── setAddr(slug) = vault ─────────────────────────────────────── ►│                │
+   ├── authorizeTextRoles ────────────────────────────────────────── ►│◄── weight only ┤
+   │                     │                     │                     │                │
+   ◄── anyone: getEnsText / getEnsAddress via Universal Resolver ────────────────────►
 ```
 
 ---
@@ -407,6 +422,7 @@ Creator                     AirIndexRegistry            IndexResolver           
 |---|---|
 | `airindex.eth` owner | `0x8bf8ff82524026dae7DcF990409f95B5F6268149` |
 | AirIndexRegistry | `0xc218969258bf134e4e330e30Fa45E834386b92F2` |
+| AirIndexRegistrar | `0xb4d26ee760410d35fbd9103bd072f3a80044f765` |
 | Protocol resolver | `0xc6CcE73dAfECe18be8C40E5ACA095B63cc01Cf13` |
 | `defi-blue` resolver | `0x5Ee981c64503d4e5d6cBF0Dcff8016834af0dD81` |
 | `big-five` resolver | `0xCd180010C9Ca2C68e8468133b91657837E110A1a` |
@@ -424,7 +440,9 @@ Creator                     AirIndexRegistry            IndexResolver           
 | `BG5` share token | `0xBF848a0EbBa9FFA4f76fD2dD42C4AC49074CdC2E` | `big-five`, 161.42 mUSDC/share |
 | `SAFE` share token | `0xc0244F8f15DBF61aca6B9623803c7AdC0F45660A` | `safe-stables`, 100.04 mUSDC/share, soulbound index |
 
-14 mock ERC20s live in total — addresses in [`sepolia-tokens.json`](apps/frontend/src/lib/mock/sepolia-tokens.json).
+14 mock ERC20s live in total — addresses in [`sepolia.json`](apps/frontend/src/lib/tokens/sepolia.json).
+
+`staked-ether-basket.airindex.eth` was published from the browser through the registrar, by a wallet that is not the deployer. Its owner is the wallet that signed it — resolve the name and check.
 
 ### Key Functions
 
@@ -438,6 +456,21 @@ ensName()                                         — the name whose records thi
 ```
 
 The price is fixed, so the vault is solvent by construction: it only ever owes back what a depositor put in, and integer division rounds toward the vault. It deliberately does **not** store the composition — that lives in the ENS records, and a second copy in storage could disagree with the name.
+
+#### AirIndexRegistrar
+
+```
+create(label, records, transferable) → (resolver, tokenId)
+```
+
+Holds `REGISTER` on the Air Index registry and lends it to whoever calls. It
+deploys the resolver proxy and passes the caller's encoded record writes to
+`initialize`, where the resolver runs them with access control bypassed — which
+is why a whole composition can be published before the caller holds any role
+over it. The registration is made out to `msg.sender`, so the registrar never
+owns anything it creates. `transferable = false` omits `CAN_TRANSFER_ADMIN`,
+which has no regular variant and cannot be granted afterwards: soulbound is
+decided in this one call, forever.
 
 #### MockERC20
 
@@ -455,6 +488,8 @@ isMethodologyLocked(roleCount)            — decodes the nybbles for CONTENTHAS
 isTransferable(tokenRoleCount)            — decodes CAN_TRANSFER_ADMIN on a registry entry
 readAgent(indexEnsName)                   — the agent's address, mandate and delegated key
 fetchLiveIndexes()                        — every published index, with the share token it settles in
+resolveName(input)                        — records, resolver, and whether the name is an entry or a wildcard
+buildRecords(name, constituents, ...)     — the encoded calls a browser publication carries
 ```
 
 > For the full research behind each decision — including the ENS docs' own methodology-lock example being incomplete — see the verification notes referenced in the commit history.
@@ -478,12 +513,14 @@ fetchLiveIndexes()                        — every published index, with the sh
 - [x] Real settlement — `IndexVault` share tokens discovered through `addr(60)` on the index name
 - [x] 14 mock ERC20s with an in-app faucet
 - [x] Deposit / redeem / swap against live contracts, with animated confirmations
+- [x] **Index creation from the browser** — `AirIndexRegistrar` lends `REGISTER` to any caller; the visitor's wallet owns the name it publishes
+- [x] **Name resolution in the app** — `/resolve` and a lookup beside every name, entry versus wildcard reported from the registry
 - [x] Two runnable gates (`check:ens`, `check:onchain`) plus three probes
 - [x] `pnpm prove` — 17 assertions covering every claim on this page, read live
 - [x] Live demo deployed — [air-index-ens.vercel.app](https://air-index-ens.vercel.app)
 - [ ] Demo video
 - [ ] `/indexes/<alias>` falls back to the chain when a slug is absent from the local catalogue
-- [ ] Index creation from the browser (today the registrar role lives with the deployer)
+- [ ] Settlement for browser-published indexes — `wire-index` still deploys the share token from a script, so a new index resolves before it can be traded
 - [ ] A price oracle — share prices are fixed at launch, so an index never gains or loses value
 
 **Two permanent consequences worth naming.** `defi-blue` shipped without `SET_ALIAS`, which is root-only and cannot be added afterwards — it can never have a ticker or a mirror. And `UNREGISTER_ADMIN` was never granted at bootstrap, so an index cannot be revoked by role; entries expire instead, and delegations are separately revocable. Both are recorded rather than hidden, because the ordering rules that caused them are the most expensive thing we learned.
