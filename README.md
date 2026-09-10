@@ -229,18 +229,18 @@ sequenceDiagram
 
 ```mermaid
 graph TD
-    NAME["btc.big-five.airindex.eth"] --> UR[Universal Resolver V2]
+    NAME["btc.big-five.airindex.eth"] --> UR["Universal Resolver V2"]
     ALIAS["bg5.airindex.eth"] --> UR
     MIRROR["big-five.funds.airindex.eth"] --> UR
 
-    UR --> WALK[walk registries<br/>root → eth → airindex → big-five]
-    WALK --> REG[AirIndexRegistry<br/>ERC-1155 entry per index]
-    REG --> RES[IndexResolver<br/>one proxy per index]
+    UR --> WALK["walk registries<br/>root → eth → airindex → big-five"]
+    WALK --> REG["AirIndexRegistry<br/>ERC-1155 entry per index"]
+    REG --> RES["IndexResolver<br/>one proxy per index"]
 
-    RES --> W["wildcard: no entry for 'btc'<br/>resolver answers on the full-name namehash"]
-    RES --> A["record alias: setAlias applies<br/>inside resolve&#40;&#41; only"]
+    RES --> W["wildcard: no entry for btc<br/>resolver answers on the full-name namehash"]
+    RES --> A["record alias: setAlias applies<br/>inside resolve() only"]
 
-    W --> OUT[addr + text&#40;weight&#41;]
+    W --> OUT["addr + text(weight)"]
     A --> OUT
     OUT --> VIEM["stock viem, zero config"]
 
