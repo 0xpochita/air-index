@@ -1,15 +1,13 @@
 "use client";
 
 import { AllocationCard } from "@/components/portfolio/AllocationCard";
-import { ButtonLink } from "@/components/ui/Button";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import {
   getPortfolioAllocation,
   getWeightedDayChangePct,
 } from "@/lib/portfolio";
-import { HoldingsTable } from "./components/HoldingsTable";
-import { PortfolioCover } from "./components/PortfolioCover";
+import { PortfolioSplit } from "./components/PortfolioSplit";
 
 export const PortfolioPage = () => {
   const { positions, totalValueUsd } = usePortfolio();
@@ -19,27 +17,15 @@ export const PortfolioPage = () => {
       <PageHeader
         title="Portfolio"
         description="Every index you hold, its unit balance and what it adds up to."
-        action={
-          <ButtonLink href="/explore" variant="secondary">
-            Explore indexes
-          </ButtonLink>
-        }
       />
 
-      <PortfolioCover
+      <PortfolioSplit
+        positions={positions}
         totalValueUsd={totalValueUsd}
         dayChangePct={getWeightedDayChangePct(positions)}
-        holdingCount={positions.length}
       />
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-          <HoldingsTable positions={positions} />
-        </div>
-        <div className="lg:col-span-2">
-          <AllocationCard allocation={getPortfolioAllocation(positions)} />
-        </div>
-      </div>
+      <AllocationCard allocation={getPortfolioAllocation(positions)} />
     </div>
   );
 };
