@@ -7,13 +7,14 @@ const LINK_CLASS =
 interface TablePaginationProps {
   currentPage: number;
   totalPages: number;
-  basePath: string;
+  /** Built by the caller so filters survive a page change. */
+  pageHref: (page: number) => string;
 }
 
 export const TablePagination = ({
   currentPage,
   totalPages,
-  basePath,
+  pageHref,
 }: TablePaginationProps) => {
   const hasPrevious = currentPage > 1;
   const hasNext = currentPage < totalPages;
@@ -25,7 +26,7 @@ export const TablePagination = ({
     >
       {hasPrevious ? (
         <Link
-          href={`${basePath}?page=${currentPage - 1}`}
+          href={pageHref(currentPage - 1)}
           className={cn(LINK_CLASS, "hover:text-ink")}
         >
           Previous
@@ -38,7 +39,7 @@ export const TablePagination = ({
 
       {hasNext ? (
         <Link
-          href={`${basePath}?page=${currentPage + 1}`}
+          href={pageHref(currentPage + 1)}
           className={cn(LINK_CLASS, "hover:text-ink")}
         >
           Next

@@ -2,18 +2,14 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { listPublishedSlugs } from "@/lib/ens/indexes";
-import {
-  getAllIndexes,
-  getCollections,
-  getFeaturedIndex,
-} from "@/lib/mock/indexes";
-import { CollectionCard } from "./components/CollectionCard";
-import { FeaturedIndexCard } from "./components/FeaturedIndexCard";
+import { getAllIndexes, getCollections } from "@/lib/mock/indexes";
+import type { IndexFund } from "@/types/index-fund";
+import { CollectionTile } from "./components/CollectionTile";
 import { IndexTable } from "./components/IndexTable";
 import { TablePagination } from "./components/TablePagination";
 
 const ROWS_PER_PAGE = 8;
-const EXPLORE_PATH = "/explore";
+const ALL_ID = "all";
 
 const resolvePage = (
   rawPage: string | undefined,
@@ -28,45 +24,86 @@ const resolvePage = (
 
 interface ExplorePageProps {
   page?: string;
+  collection?: string;
 }
 
-export const ExplorePage = async ({ page }: ExplorePageProps) => {
+export const ExplorePage = async ({ page, collection }: ExplorePageProps) => {
   const indexes = getAllIndexes();
   const liveSlugs = new Set(await listPublishedSlugs().catch(() => []));
-  const collections = getCollections();
-  const featured = getFeaturedIndex();
 
-  const totalPages = Math.max(1, Math.ceil(indexes.length / ROWS_PER_PAGE));
+  const tiles = [
+    { id: ALL_ID, title: "All indexes", indexes },
+    ...getCollections().map((entry) => ({
+      id: entry.id,
+      title: entry.title,
+      indexes: entry.indexes,
+    })),
+  ];
+
+  const activeId = tiles.some((tile) => tile.id === collection)
+    ? (collection as string)
+    : ALL_ID;
+  const active = tiles.find((tile) => tile.id === activeId) ?? tiles[0];
+
+  /** Live first: a name anyone can resolve outranks one that only exists here. */
+  const rows: IndexFund[] = [...active.indexes].sort((first, second) => {
+    const liveDelta =
+      Number(liveSlugs.has(second.slug)) - Number(liveSlugs.has(first.slug));
+    return liveDelta !== 0 ? liveDelta : first.name.localeCompare(second.name);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(rows.length / ROWS_PER_PAGE));
   const currentPage = resolvePage(page, totalPages);
-  const visibleIndexes = indexes.slice(
+  const visible = rows.slice(
     (currentPage - 1) * ROWS_PER_PAGE,
     currentPage * ROWS_PER_PAGE,
   );
 
+  const tileHref = (id: string) =>
+    id === ALL_ID ? "/explore" : `/explore?collection=${id}`;
+  const pageHref = (next: number) =>
+    activeId === ALL_ID
+      ? `/explore?page=${next}`
+      : `/explore?collection=${activeId}&page=${next}`;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <PageHeader
         title="Explore"
         description="Crypto index funds published as ENS names. Every allocation is readable onchain."
       />
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <FeaturedIndexCard index={featured} />
-        {collections.map((collection) => (
-          <CollectionCard key={collection.id} collection={collection} />
+      <div className="grid gap-4 sm:grid-cols-3">
+        {tiles.map((tile) => (
+          <CollectionTile
+            key={tile.id}
+            href={tileHref(tile.id)}
+            title={tile.title}
+            indexes={tile.indexes}
+            isActive={tile.id === activeId}
+          />
         ))}
       </div>
 
       <Card className="overflow-hidden">
-        <CardHeader title="Highest total deposits" />
-        {visibleIndexes.length > 0 ? (
+        <CardHeader
+          title={active.title}
+          action={
+            <span className="text-xs text-ink-subtle">
+              {`${liveSlugs.size} live on Sepolia`}
+            </span>
+          }
+        />
+        {visible.length > 0 ? (
           <>
-            <IndexTable indexes={visibleIndexes} liveSlugs={liveSlugs} />
-            <TablePagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              basePath={EXPLORE_PATH}
-            />
+            <IndexTable indexes={visible} liveSlugs={liveSlugs} />
+            {totalPages > 1 ? (
+              <TablePagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                pageHref={pageHref}
+              />
+            ) : null}
           </>
         ) : (
           <EmptyState
