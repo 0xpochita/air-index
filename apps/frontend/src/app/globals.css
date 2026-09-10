@@ -56,6 +56,24 @@
     outline-offset: 2px;
   }
 
+  /*
+   * Browsers give <button> an arrow cursor and Tailwind's preflight leaves that
+   * alone, so every button in the app read as inert. Set it once here rather
+   * than adding a class to each call site, which is a rule that only holds
+   * until someone forgets it.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  label[for],
+  summary,
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,
