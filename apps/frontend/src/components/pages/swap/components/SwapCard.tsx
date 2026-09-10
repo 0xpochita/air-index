@@ -135,12 +135,18 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
       return;
     }
 
-    setReceipt({
-      kind: "index",
-      summary: `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`,
-      /** Swap hands you the other index; deposit and redeem both act on this one. */
-      live: form.mode === "swap" && alternate ? alternate : live,
-    });
+    /** The receipt always names what landed in the wallet, never what left it. */
+    const summary = `${formatAmount(form.payment.amount)} ${form.payment.symbol} → ${formatAmount(form.receipt.amount)} ${form.receipt.symbol}`;
+
+    setReceipt(
+      form.mode === "redeem"
+        ? { kind: "token", summary, token: form.quote }
+        : {
+            kind: "index",
+            summary,
+            live: form.mode === "swap" && alternate ? alternate : live,
+          },
+    );
 
     if (form.mode === "deposit") {
       actions.deposit(live.vault, form.payAmountWei);
