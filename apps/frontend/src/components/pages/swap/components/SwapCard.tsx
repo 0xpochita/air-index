@@ -320,7 +320,7 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
           type="button"
           onClick={primary.onClick}
           disabled={primary.disabled}
-          className="swap-cta w-full rounded-full py-3.5 text-sm font-semibold text-ink-inverse disabled:opacity-45"
+          className="cta-gradient w-full rounded-full py-3.5 text-sm font-semibold text-ink-inverse disabled:opacity-45"
         >
           {primary.label}
         </button>

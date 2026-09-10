@@ -6,11 +6,11 @@ import { cn } from "@/lib/cn";
  * square beside it, minus a quarter circle, so the gap between the notch and
  * the page edge reads as a concave curve rather than a hard corner.
  *
- * They only work against an opaque notch: a translucent one would let the page
- * show through at a different opacity than the wing and break the illusion.
+ * They only work against an opaque notch, and only when it contrasts with the
+ * page: a white notch on a white page has nothing to curve out of.
  */
 const WING_CLASS =
-  "pointer-events-none absolute top-0 size-4 overflow-visible select-none text-surface";
+  "pointer-events-none absolute top-0 size-4 overflow-visible select-none text-ink";
 
 export const NotchLeftWing = ({ className }: { className?: string }) => (
   <svg
@@ -57,7 +57,7 @@ interface NotchProps {
 export const Notch = ({ children, className }: NotchProps) => (
   <div
     className={cn(
-      "relative flex items-center rounded-b-[22px] bg-surface shadow-floating",
+      "relative flex items-center rounded-b-[22px] bg-ink",
       className,
     )}
   >

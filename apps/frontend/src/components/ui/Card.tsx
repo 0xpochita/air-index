@@ -4,9 +4,9 @@ import { cn } from "@/lib/cn";
 type CardTone = "surface" | "subtle" | "accent";
 
 const TONE_CLASS: Record<CardTone, string> = {
-  surface: "bg-surface/72",
-  subtle: "bg-surface-subtle/75",
-  accent: "bg-surface-accent/70",
+  surface: "bg-surface",
+  subtle: "bg-surface-subtle",
+  accent: "bg-surface-accent",
 };
 
 interface CardProps {
@@ -18,7 +18,7 @@ interface CardProps {
 export const Card = ({ children, tone = "surface", className }: CardProps) => (
   <section
     className={cn(
-      "rounded-xl border border-canvas/70 shadow-glass backdrop-blur-xl",
+      "rounded-2xl border border-line shadow-raised",
       TONE_CLASS[tone],
       className,
     )}

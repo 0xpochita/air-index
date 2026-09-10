@@ -17,6 +17,7 @@ interface ConstituentRowProps {
   onRemove: () => void;
 }
 
+/** Every row holds two controls, so it reads as a pill rather than a table line. */
 export const ConstituentRow = ({
   token,
   weightBps,
@@ -27,11 +28,13 @@ export const ConstituentRow = ({
   const inputId = `weight-${token.symbol}`;
 
   return (
-    <li className="flex items-center gap-4 border-t border-line px-5 py-4">
+    <li className="soft-pill flex items-center gap-4 rounded-[1.15rem] bg-surface-subtle px-4 py-3.5">
       <TokenIcon token={token} size="md" />
 
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-medium text-ink">{token.name}</span>
+        <span className="block text-sm font-semibold text-ink">
+          {token.name}
+        </span>
         <span className="block truncate font-mono text-xs text-ink-muted">
           {protocolSubname}
         </span>
@@ -58,7 +61,7 @@ export const ConstituentRow = ({
       <button
         type="button"
         onClick={onRemove}
-        className="rounded-md p-2 text-ink-subtle transition-colors duration-150 ease-out hover:bg-surface-hover hover:text-negative"
+        className="rounded-full p-2 text-ink-subtle transition-colors duration-150 ease-out hover:bg-surface hover:text-negative"
       >
         <TrashIcon size={16} aria-hidden />
         <span className="sr-only">{`Remove ${token.name}`}</span>

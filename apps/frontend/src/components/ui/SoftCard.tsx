@@ -20,10 +20,7 @@ export const SoftCard = ({
   className,
 }: SoftCardProps) => (
   <section
-    className={cn(
-      "soft-shell rounded-[1.75rem] bg-surface/90 p-2.5 backdrop-blur-xl",
-      className,
-    )}
+    className={cn("soft-shell rounded-[1.75rem] bg-surface p-2.5", className)}
   >
     {title ? (
       <header className="flex items-center justify-between gap-4 px-3.5 pt-2.5 pb-3">

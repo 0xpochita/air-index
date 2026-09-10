@@ -19,7 +19,7 @@ import { useWallet } from "@/lib/onchain/WalletProvider";
 import { FaucetDialog } from "./FaucetDialog";
 
 const BAR_ICON =
-  "rounded-full p-2 text-ink-muted transition-colors duration-150 ease-out hover:bg-surface-hover hover:text-ink";
+  "rounded-full p-2 text-ink-inverse/60 transition-colors duration-150 ease-out hover:bg-ink-inverse/10 hover:text-ink-inverse";
 
 const WalletControl = () => {
   const {
@@ -74,7 +74,7 @@ const WalletControl = () => {
   return (
     <span className="flex items-center gap-1.5">
       <span className="size-7 shrink-0 rounded-full bg-accent" aria-hidden />
-      <span className="hidden font-mono text-sm font-medium text-ink sm:block">
+      <span className="hidden font-mono text-sm font-medium text-ink-inverse sm:block">
         {truncateAddress(address)}
       </span>
       <button
@@ -130,22 +130,26 @@ export const Navbar = () => {
               priority
               className="size-[26px] rounded-md"
             />
-            <span className="hidden text-sm font-semibold tracking-tight text-ink sm:block">
+            <span className="hidden text-sm font-semibold tracking-tight text-ink-inverse sm:block">
               {SITE.name}
             </span>
           </Link>
 
-          <span aria-hidden className="h-5 w-px shrink-0 bg-line" />
+          <span aria-hidden className="h-5 w-px shrink-0 bg-ink-inverse/15" />
 
           <button
             type="button"
             onClick={() => setIsMenuOpen((open) => !open)}
             aria-expanded={isMenuOpen}
             aria-haspopup="menu"
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-semibold text-ink transition-colors duration-150 ease-out hover:bg-surface-hover"
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-2 py-1.5 text-sm font-semibold text-ink-inverse transition-colors duration-150 ease-out hover:bg-ink-inverse/10"
           >
             {ActiveIcon ? (
-              <ActiveIcon size={16} aria-hidden className="text-ink-muted" />
+              <ActiveIcon
+                size={16}
+                aria-hidden
+                className="text-ink-inverse/60"
+              />
             ) : null}
             {active?.label ?? "Menu"}
             <CaretDownIcon
@@ -153,13 +157,13 @@ export const Navbar = () => {
               weight="bold"
               aria-hidden
               className={cn(
-                "text-ink-subtle transition-transform duration-150 ease-out",
+                "text-ink-inverse/60 transition-transform duration-150 ease-out",
                 isMenuOpen && "rotate-180",
               )}
             />
           </button>
 
-          <span aria-hidden className="h-5 w-px shrink-0 bg-line" />
+          <span aria-hidden className="h-5 w-px shrink-0 bg-ink-inverse/15" />
 
           <FaucetDialog triggerClassName={BAR_ICON} />
 

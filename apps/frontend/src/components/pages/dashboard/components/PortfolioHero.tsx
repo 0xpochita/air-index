@@ -61,7 +61,7 @@ const CopyAddress = ({ address }: { address: `0x${string}` }) => {
       type="button"
       onClick={copy}
       title="Copy address"
-      className="soft-badge rounded-xl bg-surface/70 p-2 text-ink-muted transition-colors duration-150 ease-out hover:bg-surface hover:text-ink"
+      className="soft-badge rounded-xl bg-surface-subtle p-2 text-ink-muted transition-colors duration-150 ease-out hover:bg-surface hover:text-ink"
     >
       <CopyStateIcon
         size={16}
@@ -87,7 +87,7 @@ export const PortfolioHero = ({
   const isUp = dayChangePct >= 0;
 
   return (
-    <section className="soft-shell rounded-[1.75rem] bg-surface/90 p-2.5 backdrop-blur-xl">
+    <section className="soft-shell rounded-[1.75rem] bg-surface p-2.5">
       <div className="wallet-mesh relative overflow-hidden rounded-[1.35rem] p-6 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
