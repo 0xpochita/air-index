@@ -1,20 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import {
-  applyRouteCost,
-  getUnitPriceUsd,
-  quoteAssetToUnits,
-  unitsToQuoteAsset,
-  unitsToUnits,
-} from "@/lib/index-math";
-import { getDefaultQuoteAsset, getIndexUnitBalance } from "@/lib/mock/quotes";
-import type {
-  IndexFund,
-  QuoteAsset,
-  SwapMode,
-  SwapRoute,
-} from "@/types/index-fund";
+import { useState } from "react";
+import { parseUnits } from "viem";
+import { QUOTE_PRICE_USD, SETTLEMENT_SYMBOL } from "@/lib/mock/quotes";
+import { TOKENS } from "@/lib/mock/tokens";
+import { SHARE_DECIMALS } from "@/lib/onchain/abis";
+import { toFloat, usePortfolio } from "@/lib/onchain/PortfolioProvider";
+import type { LiveIndex } from "@/lib/onchain/vaults";
+import type { SwapMode } from "@/types/index-fund";
 
 const AMOUNT_PATTERN = /^\d*\.?\d*$/;
 
@@ -26,101 +19,123 @@ export interface SwapSide {
 }
 
 interface UseSwapFormOptions {
-  index: IndexFund;
-  alternateIndex: IndexFund;
+  live: LiveIndex;
+  alternate: LiveIndex | undefined;
 }
+
+/** `parseUnits` rejects the half typed states an input goes through. */
+const toWei = (input: string, decimals: number): bigint => {
+  const cleaned = input.replace(/\.$/, "");
+
+  if (!cleaned || cleaned === ".") {
+    return 0n;
+  }
+
+  try {
+    return parseUnits(
+      cleaned.startsWith(".") ? `0${cleaned}` : cleaned,
+      decimals,
+    );
+  } catch {
+    return 0n;
+  }
+};
 
 const parseAmount = (value: string): number => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
-const toIndexSymbol = (index: IndexFund): string =>
-  (index.ticker ?? index.slug).toUpperCase();
+const toIndexSymbol = (live: LiveIndex): string =>
+  (live.fund.ticker ?? live.slug).toUpperCase();
 
-export const useSwapForm = ({ index, alternateIndex }: UseSwapFormOptions) => {
+/**
+ * Every number here comes from the vault: the share price is read from the
+ * contract that will actually settle the trade, so the preview and the receipt
+ * cannot disagree.
+ */
+export const useSwapForm = ({ live, alternate }: UseSwapFormOptions) => {
+  const { sharePrices, shares, quoteBalances } = usePortfolio();
   const [mode, setMode] = useState<SwapMode>("deposit");
-  const [route, setRoute] = useState<SwapRoute>("direct");
   const [amountInput, setAmountInput] = useState("");
-  const [quoteAsset, setQuoteAsset] =
-    useState<QuoteAsset>(getDefaultQuoteAsset);
+
+  const quote = TOKENS[SETTLEMENT_SYMBOL];
+  const quoteSymbol = `m${SETTLEMENT_SYMBOL.toUpperCase()}`;
+  const quotePriceUsd = QUOTE_PRICE_USD[SETTLEMENT_SYMBOL];
+
+  const unitPriceUsd = (slug: string): number =>
+    toFloat(sharePrices[slug] ?? 0n, quote.decimals) * quotePriceUsd;
+
+  const indexPriceUsd = unitPriceUsd(live.slug);
+  const alternatePriceUsd = alternate ? unitPriceUsd(alternate.slug) : 0;
+
+  const quoteBalance = toFloat(
+    quoteBalances[SETTLEMENT_SYMBOL] ?? 0n,
+    quote.decimals,
+  );
+  const indexBalance = toFloat(shares[live.slug] ?? 0n, SHARE_DECIMALS);
+  const alternateBalance = alternate
+    ? toFloat(shares[alternate.slug] ?? 0n, SHARE_DECIMALS)
+    : 0;
 
   const amount = parseAmount(amountInput);
-  const unitPriceUsd = getUnitPriceUsd(index);
-  const indexBalance = getIndexUnitBalance(index.slug);
-  const indexSymbol = toIndexSymbol(index);
-  const alternateSymbol = toIndexSymbol(alternateIndex);
+  const indexSymbol = toIndexSymbol(live);
+  const alternateSymbol = alternate ? toIndexSymbol(alternate) : "—";
 
-  const receivedAmount = useMemo(() => {
+  const convert = (value: number): number => {
+    if (indexPriceUsd === 0) {
+      return 0;
+    }
     if (mode === "deposit") {
-      return applyRouteCost(
-        quoteAssetToUnits(amount, quoteAsset, index),
-        route,
-      );
+      return (value * quotePriceUsd) / indexPriceUsd;
     }
     if (mode === "redeem") {
-      return applyRouteCost(
-        unitsToQuoteAsset(amount, index, quoteAsset),
-        route,
-      );
+      return (value * indexPriceUsd) / quotePriceUsd;
     }
-    return applyRouteCost(unitsToUnits(amount, index, alternateIndex), route);
-  }, [alternateIndex, amount, index, mode, quoteAsset, route]);
+    return alternatePriceUsd === 0
+      ? 0
+      : (value * indexPriceUsd) / alternatePriceUsd;
+  };
+
+  const receivedAmount = convert(amount);
 
   const payment: SwapSide =
     mode === "deposit"
       ? {
-          symbol: quoteAsset.token.symbol.toUpperCase(),
+          symbol: quoteSymbol,
           amount,
-          balance: quoteAsset.balance,
-          valueUsd: amount * quoteAsset.priceUsd,
+          balance: quoteBalance,
+          valueUsd: amount * quotePriceUsd,
         }
       : {
           symbol: indexSymbol,
           amount,
           balance: indexBalance,
-          valueUsd: amount * unitPriceUsd,
+          valueUsd: amount * indexPriceUsd,
         };
 
   const receipt: SwapSide =
     mode === "redeem"
       ? {
-          symbol: quoteAsset.token.symbol.toUpperCase(),
+          symbol: quoteSymbol,
           amount: receivedAmount,
-          balance: quoteAsset.balance,
-          valueUsd: receivedAmount * quoteAsset.priceUsd,
+          balance: quoteBalance,
+          valueUsd: receivedAmount * quotePriceUsd,
         }
       : {
           symbol: mode === "deposit" ? indexSymbol : alternateSymbol,
           amount: receivedAmount,
-          balance:
-            mode === "deposit"
-              ? indexBalance
-              : getIndexUnitBalance(alternateIndex.slug),
+          balance: mode === "deposit" ? indexBalance : alternateBalance,
           valueUsd:
             receivedAmount *
-            (mode === "deposit"
-              ? unitPriceUsd
-              : getUnitPriceUsd(alternateIndex)),
+            (mode === "deposit" ? indexPriceUsd : alternatePriceUsd),
         };
-
-  const previewRate = useMemo(() => {
-    if (mode === "deposit") {
-      return applyRouteCost(quoteAssetToUnits(1, quoteAsset, index), route);
-    }
-    if (mode === "redeem") {
-      return applyRouteCost(unitsToQuoteAsset(1, index, quoteAsset), route);
-    }
-    return applyRouteCost(unitsToUnits(1, index, alternateIndex), route);
-  }, [alternateIndex, index, mode, quoteAsset, route]);
 
   const changeAmount = (value: string) => {
     if (AMOUNT_PATTERN.test(value)) {
       setAmountInput(value);
     }
   };
-
-  const setMaxAmount = () => setAmountInput(String(payment.balance));
 
   const changeMode = (nextMode: SwapMode) => {
     setMode(nextMode);
@@ -129,21 +144,24 @@ export const useSwapForm = ({ index, alternateIndex }: UseSwapFormOptions) => {
 
   return {
     mode,
-    route,
     amountInput,
-    quoteAsset,
     payment,
     receipt,
-    unitPriceUsd,
-    previewRate,
+    quote,
+    quoteSymbol,
+    unitPriceUsd: indexPriceUsd,
+    previewRate: convert(1),
     indexSymbol,
     alternateSymbol,
     hasAmount: amount > 0,
     isOverBalance: amount > payment.balance,
+    /** The exact integer the contract call takes, never re-derived from a float. */
+    payAmountWei: toWei(
+      amountInput,
+      mode === "deposit" ? quote.decimals : SHARE_DECIMALS,
+    ),
     changeMode,
     changeAmount,
-    setMaxAmount,
-    setRoute,
-    setQuoteAsset,
+    setMaxAmount: () => setAmountInput(String(payment.balance)),
   };
 };

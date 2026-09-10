@@ -1,7 +1,10 @@
+"use client";
+
 import { ButtonLink } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { getAllIndexes, getIndexBySlug } from "@/lib/mock/indexes";
+import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import { SwapArtPanel } from "./components/SwapArtPanel";
 import { SwapCard } from "./components/SwapCard";
 
@@ -10,9 +13,9 @@ interface SwapPageProps {
 }
 
 export const SwapPage = ({ indexSlug }: SwapPageProps) => {
-  const indexes = getAllIndexes();
-  const index =
-    (indexSlug ? getIndexBySlug(indexSlug) : undefined) ?? indexes[0];
+  const { liveIndexes } = usePortfolio();
+  const live =
+    liveIndexes.find((entry) => entry.slug === indexSlug) ?? liveIndexes[0];
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
@@ -29,7 +32,14 @@ export const SwapPage = ({ indexSlug }: SwapPageProps) => {
       <div className="grid gap-5 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <SwapArtPanel />
         <Card className="p-5">
-          <SwapCard index={index} indexes={indexes} />
+          {live ? (
+            <SwapCard live={live} liveIndexes={liveIndexes} />
+          ) : (
+            <EmptyState
+              title="No index is tradeable yet"
+              description="An index becomes tradeable once its ENS name resolves to a share token. Run pnpm wire-index <slug> to publish one."
+            />
+          )}
         </Card>
       </div>
     </div>
