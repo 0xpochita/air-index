@@ -1,6 +1,5 @@
 "use client";
 
-import { AllocationCard } from "@/components/portfolio/AllocationCard";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { usePortfolio } from "@/lib/onchain/PortfolioProvider";
 import {
@@ -23,9 +22,8 @@ export const PortfolioPage = () => {
         positions={positions}
         totalValueUsd={totalValueUsd}
         dayChangePct={getWeightedDayChangePct(positions)}
+        allocation={getPortfolioAllocation(positions)}
       />
-
-      <AllocationCard allocation={getPortfolioAllocation(positions)} />
     </div>
   );
 };

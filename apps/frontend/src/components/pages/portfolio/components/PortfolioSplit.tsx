@@ -8,15 +8,19 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { AllocationRows } from "@/components/portfolio/AllocationRows";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ReturnValue } from "@/components/ui/ReturnValue";
+import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref } from "@/config/navigation";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
 import { formatAmount, formatUsd, truncateAddress } from "@/lib/format";
+import { TOKENS } from "@/lib/mock/tokens";
 import { useWallet } from "@/lib/onchain/WalletProvider";
+import type { AllocationSlice } from "@/lib/portfolio";
 import { getPortfolioValueUsd } from "@/lib/portfolio";
 import type { PortfolioPosition } from "@/types/index-fund";
 
@@ -109,19 +113,22 @@ interface PortfolioSplitProps {
   positions: PortfolioPosition[];
   totalValueUsd: number;
   dayChangePct: number;
+  allocation: AllocationSlice[];
 }
 
 export const PortfolioSplit = ({
   positions,
   totalValueUsd,
   dayChangePct,
+  allocation,
 }: PortfolioSplitProps) => (
   <section className="soft-shell grid overflow-hidden rounded-[1.75rem] bg-surface lg:grid-cols-2">
     <div className="flex flex-col">
       <div className="space-y-5 p-6 sm:p-7">
         <div className="flex items-start justify-between gap-4">
           <p className="text-sm text-ink-muted">Portfolio value</p>
-          <span className="rounded-full bg-surface-subtle px-2.5 py-1 text-xs font-medium text-ink-muted">
+          <span className="flex items-center gap-1.5 rounded-full bg-surface-subtle py-1 pr-2.5 pl-1 text-xs font-medium text-ink-muted">
+            <TokenIcon token={TOKENS.eth} size="sm" className="ring-0" />
             {SITE.network}
           </span>
         </div>
@@ -231,13 +238,22 @@ export const PortfolioSplit = ({
             })}
           </ul>
         ) : (
-          <div className="flex flex-1 items-center border-t border-line">
+          <div className="flex items-center border-t border-line">
             <EmptyState
               title="No holdings yet"
               description="Deposit into an index and it will appear here with its unit balance."
             />
           </div>
         )}
+
+        {allocation.length > 0 ? (
+          <div className="flex-1 border-t border-line px-5 pt-5 pb-6">
+            <h2 className="mb-4 text-sm font-semibold text-ink">
+              Look through exposure
+            </h2>
+            <AllocationRows allocation={allocation} />
+          </div>
+        ) : null}
       </div>
     </div>
   </section>
