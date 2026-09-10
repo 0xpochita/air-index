@@ -23,6 +23,8 @@ const AGENT_LABEL = "rebalancer";
 const WEIGHT_KEY = "weight";
 const MANDATE_KEY = "mandate";
 const SLUG = process.argv[2];
+/** EAC grants are revocable. The same call with `false` takes the key back. */
+const IS_REVOKE = process.argv.includes("--revoke");
 
 const DEFAULT_MANDATE =
   "Reset every constituent to its target allocation on a fixed schedule.";
@@ -68,6 +70,43 @@ const run = async () => {
   console.log(`index    ${ensName}`);
   console.log(`agent    ${agent.account.address}`);
   console.log(`resolver ${resolver}`);
+
+  if (IS_REVOKE) {
+    console.log(`\n1. take the ${WEIGHT_KEY} key back from the agent`);
+    for (const symbol of labels) {
+      await logTx(
+        `revoke ${symbol}`,
+        await client.writeContract({
+          address: resolver,
+          abi: permissionedResolverAbi,
+          functionName: "authorizeTextRoles",
+          args: [
+            toDnsEncoded(`${symbol}.${ensName}`),
+            WEIGHT_KEY,
+            agent.account.address,
+            false,
+          ],
+        }),
+      );
+    }
+
+    console.log("\n2. the agent must now be refused");
+    await assert.rejects(
+      publicClient.simulateContract({
+        account: agent.account,
+        address: resolver,
+        abi: permissionedResolverAbi,
+        functionName: "setText",
+        args: [toNode(`${labels[0]}.${ensName}`), WEIGHT_KEY, "2000"],
+      }),
+      "a revoked agent must not be able to move weights",
+    );
+    console.log(`  ${WEIGHT_KEY} on ${labels[0]}.${ensName}: refused`);
+    console.log(
+      `\n${agentName} keeps its name and its mandate, and has lost its key`,
+    );
+    return;
+  }
 
   console.log(`\n1. publish ${agentName}`);
   await logTx(
