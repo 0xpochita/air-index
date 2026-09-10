@@ -1,7 +1,19 @@
 import type { Metadata } from "next";
+import { Geist_Mono } from "next/font/google";
 import { GradientBackground } from "@/components/ui/bloom-field-gradient";
 import { SITE } from "@/config/site";
 import "./globals.css";
+
+/**
+ * ENS names are the product, and they are set in mono everywhere they appear.
+ * The system stack renders them as Menlo on most machines, which is cramped and
+ * uneven at small sizes. Self hosted at build time, so no request leaves the page.
+ */
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -18,7 +30,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className="h-full antialiased">
+    <html lang="en" className={`${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full">
         <div aria-hidden className="fixed inset-0 -z-10">
           <GradientBackground className="h-full w-full" />

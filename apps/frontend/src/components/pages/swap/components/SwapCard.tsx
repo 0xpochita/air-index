@@ -32,7 +32,7 @@ const SUCCESS_TITLE: Record<string, string> = {
 };
 
 const ensLabel = (name: string) => (
-  <span className="font-mono text-[13px] tracking-tight">{name}</span>
+  <span className="font-mono text-[13px] font-medium">{name}</span>
 );
 
 const MODE_PAY_LABEL: Record<SwapMode, string> = {
