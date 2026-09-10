@@ -8,6 +8,12 @@
   Crypto index funds where the ENS name <em>is</em> the fund — composition, custody rules and the rebalancing agent all live in the namespace.
 </p>
 
+<p align="center">
+  <a href="https://air-index-ens.vercel.app"><strong>Live demo</strong></a>
+  ·
+  <a href="https://sepolia.etherscan.io/address/0xc218969258bf134e4e330e30Fa45E834386b92F2">AirIndexRegistry on Sepolia</a>
+</p>
+
 ---
 
 Air Index is an index-fund protocol built entirely on **ENSv2 (Sepolia beta)**. An index is not a row in a database that happens to have a name attached — it is a name. `big-five.airindex.eth` resolves to its own share token, its constituents are subnames nobody registered, its methodology is locked by burnt resolver roles, and its rebalancing agent is itself a name with an address, a published mandate, and exactly one record it is allowed to write.
@@ -290,6 +296,8 @@ pnpm dev
 
 Open [http://localhost:3000](http://localhost:3000). The app reads the live Sepolia deployment out of the box — connect a wallet, mint from the navbar faucet, and deposit.
 
+Or skip the setup entirely: **[air-index-ens.vercel.app](https://air-index-ens.vercel.app)** runs against the same contracts. You need a wallet on Sepolia with a little test ether for gas; every token you trade with is mintable from the faucet in the navbar.
+
 ### Publishing your own protocol
 
 ```bash
@@ -471,7 +479,7 @@ fetchLiveIndexes()                        — every published index, with the sh
 - [x] 14 mock ERC20s with an in-app faucet
 - [x] Deposit / redeem / swap against live contracts, with animated confirmations
 - [x] Two runnable gates (`check:ens`, `check:onchain`) plus three probes
-- [ ] Live demo deployment
+- [x] Live demo deployed — [air-index-ens.vercel.app](https://air-index-ens.vercel.app)
 - [ ] Demo video
 - [ ] `/indexes/<alias>` falls back to the chain when a slug is absent from the local catalogue
 - [ ] Index creation from the browser (today the registrar role lives with the deployer)
@@ -488,6 +496,8 @@ fetchLiveIndexes()                        — every published index, with the sh
 | **Event** | ETHGlobal Hackathon |
 | **Track** | ENS: Best Use of ENSv2 |
 | **Network** | Ethereum Sepolia (ENSv2 beta) |
+| **Live demo** | [air-index-ens.vercel.app](https://air-index-ens.vercel.app) |
+| **Source** | [github.com/0xpochita/air-index](https://github.com/0xpochita/air-index) |
 
 ---
 
