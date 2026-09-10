@@ -1,10 +1,5 @@
 "use client";
 
-import {
-  IdentificationCardIcon,
-  LockSimpleIcon,
-  StackSimpleIcon,
-} from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import { useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -14,7 +9,7 @@ import { formatWeight } from "@/lib/format";
 import { TOKENS } from "@/lib/mock/tokens";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
 import { ConstituentRow } from "./ConstituentRow";
-import { type SectionStatus, SetupSection } from "./SetupSection";
+import { type StepDefinition, Stepper } from "./Stepper";
 import { TokenPickerDialog } from "./TokenPickerDialog";
 
 const TOTAL_WEIGHT_BPS = 10_000;
@@ -24,8 +19,13 @@ const PLACEHOLDER_SLUG = "your-index";
 
 const FIELD_CLASS =
   "w-full rounded-xl border border-line bg-surface px-3.5 py-3 text-sm text-ink outline-none placeholder:text-ink-subtle focus-visible:ring-2 focus-visible:ring-accent/40";
+const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-ink-subtle";
 
-type SectionId = "identity" | "constituents" | "publish";
+const STEPS: StepDefinition[] = [
+  { id: "identity", label: "Identity" },
+  { id: "constituents", label: "Constituents" },
+  { id: "methodology", label: "Methodology" },
+];
 
 const toSlug = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, "-").replace(SLUG_PATTERN, "");
@@ -45,6 +45,7 @@ const buildEvenWeights = (symbols: TokenSymbol[]): Record<string, number> => {
 };
 
 export const IndexBuilderForm = () => {
+  const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSymbols, setSelectedSymbols] =
@@ -53,7 +54,6 @@ export const IndexBuilderForm = () => {
     buildEvenWeights(DEFAULT_SYMBOLS),
   );
   const [shouldLockMethodology, setShouldLockMethodology] = useState(true);
-  const [openSection, setOpenSection] = useState<SectionId | null>("identity");
 
   const slug = toSlug(name);
   const ensName = `${slug || PLACEHOLDER_SLUG}.${SITE.protocolRoot}`;
@@ -73,22 +73,25 @@ export const IndexBuilderForm = () => {
   const isBalanced = totalWeightBps === TOTAL_WEIGHT_BPS;
   const hasIdentity = slug.length > 0;
   const hasConstituents = selectedSymbols.length > 0 && isBalanced;
-  const canSubmit = hasIdentity && hasConstituents;
+
+  /** Each step gates the next, so the rail can never run ahead of the form. */
+  const isStepValid = [hasIdentity, hasConstituents, true];
+  const isReachable = (index: number) =>
+    isStepValid.slice(0, index).every(Boolean);
+  const isLast = step === STEPS.length - 1;
+  const canAdvance = isStepValid[step];
 
   const replaceSymbols = (nextSymbols: TokenSymbol[]) => {
     setSelectedSymbols(nextSymbols);
     setWeights(buildEvenWeights(nextSymbols));
   };
 
-  const toggle = (id: SectionId) =>
-    setOpenSection((current) => (current === id ? null : id));
-
-  /** Open beats done: a section you are filling in should not read as finished. */
-  const statusOf = (id: SectionId, isDone: boolean): SectionStatus => {
-    if (openSection === id) {
-      return "in-progress";
-    }
-    return isDone ? "complete" : "incomplete";
+  const reset = () => {
+    setName("");
+    setDescription("");
+    replaceSymbols(DEFAULT_SYMBOLS);
+    setShouldLockMethodology(true);
+    setStep(0);
   };
 
   return (
@@ -115,118 +118,110 @@ export const IndexBuilderForm = () => {
         </div>
       </header>
 
-      <div className="mt-5 space-y-5">
-        <SetupSection
-          icon={IdentificationCardIcon}
-          title="Identity"
-          description={
-            hasIdentity ? ensName : "Name it, and it becomes an ENS name."
-          }
-          status={statusOf("identity", hasIdentity)}
-          isOpen={openSection === "identity"}
-          onToggle={() => toggle("identity")}
-        >
-          <div className="space-y-4 rounded-2xl border border-line p-4">
-            <div>
-              <label
-                htmlFor="index-name"
-                className="mb-1.5 block text-xs font-medium text-ink-subtle"
-              >
-                Index name
-              </label>
-              <input
-                id="index-name"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder="DeFi Blue Chips"
-                className={FIELD_CLASS}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="index-description"
-                className="mb-1.5 block text-xs font-medium text-ink-subtle"
-              >
-                Description
-              </label>
-              <textarea
-                id="index-description"
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                rows={2}
-                placeholder="What does this index track, and why?"
-                className={FIELD_CLASS}
-              />
-            </div>
-            <p className="font-mono text-xs text-ink-subtle">{ensName}</p>
-          </div>
-        </SetupSection>
+      <div className="py-6">
+        <Stepper
+          steps={STEPS}
+          current={step}
+          isReachable={isReachable}
+          onSelect={setStep}
+        />
+      </div>
 
-        <SetupSection
-          icon={StackSimpleIcon}
-          title="Constituents"
-          description={`${selectedSymbols.length} token${selectedSymbols.length === 1 ? "" : "s"} · ${formatWeight(totalWeightBps)} allocated`}
-          status={statusOf("constituents", hasConstituents)}
-          isOpen={openSection === "constituents"}
-          onToggle={() => toggle("constituents")}
-        >
-          <div className="space-y-2.5 rounded-2xl border border-line p-4">
-            {selectedSymbols.length > 0 ? (
-              <ul className="space-y-2.5">
-                {selectedSymbols.map((symbol) => (
-                  <ConstituentRow
-                    key={symbol}
-                    token={TOKENS[symbol]}
-                    weightBps={weights[symbol] ?? 0}
-                    protocolSubname={`${symbol}.${ensName}`}
-                    onWeightChange={(weightBps) =>
-                      setWeights((current) => ({
-                        ...current,
-                        [symbol]: weightBps,
-                      }))
-                    }
-                    onRemove={() =>
-                      replaceSymbols(
-                        selectedSymbols.filter((entry) => entry !== symbol),
-                      )
-                    }
-                  />
-                ))}
-              </ul>
-            ) : (
+      {step === 0 ? (
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="index-name" className={LABEL_CLASS}>
+              Index name
+            </label>
+            <input
+              id="index-name"
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              placeholder="DeFi Blue Chips"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <div>
+            <label htmlFor="index-description" className={LABEL_CLASS}>
+              Description
+            </label>
+            <textarea
+              id="index-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              rows={3}
+              placeholder="What does this index track, and why?"
+              className={FIELD_CLASS}
+            />
+          </div>
+          <p className="rounded-xl bg-surface-subtle px-3.5 py-3 font-mono text-xs text-ink-muted">
+            {ensName}
+          </p>
+        </div>
+      ) : null}
+
+      {step === 1 ? (
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between gap-4 px-1">
+            <p className="text-xs text-ink-subtle">
+              {`${selectedSymbols.length} token${selectedSymbols.length === 1 ? "" : "s"}, each published as a subname`}
+            </p>
+            <p
+              className={cn(
+                "text-xs font-medium tabular-nums",
+                isBalanced ? "text-positive" : "text-negative",
+              )}
+            >
+              {`${formatWeight(totalWeightBps)} allocated`}
+            </p>
+          </div>
+
+          {selectedSymbols.length > 0 ? (
+            <ul className="space-y-2.5">
+              {selectedSymbols.map((symbol) => (
+                <ConstituentRow
+                  key={symbol}
+                  token={TOKENS[symbol]}
+                  weightBps={weights[symbol] ?? 0}
+                  protocolSubname={`${symbol}.${ensName}`}
+                  onWeightChange={(weightBps) =>
+                    setWeights((current) => ({
+                      ...current,
+                      [symbol]: weightBps,
+                    }))
+                  }
+                  onRemove={() =>
+                    replaceSymbols(
+                      selectedSymbols.filter((entry) => entry !== symbol),
+                    )
+                  }
+                />
+              ))}
+            </ul>
+          ) : (
+            <div className="rounded-2xl border border-line">
               <EmptyState
                 title="No constituents"
                 description="Add at least one token. Each becomes a subname under your index."
               />
-            )}
+            </div>
+          )}
 
-            <TokenPickerDialog
-              availableSymbols={availableSymbols}
-              onSelect={(symbol) =>
-                replaceSymbols([...selectedSymbols, symbol])
-              }
-            />
+          <TokenPickerDialog
+            availableSymbols={availableSymbols}
+            onSelect={(symbol) => replaceSymbols([...selectedSymbols, symbol])}
+          />
 
-            {!isBalanced ? (
-              <p className="text-xs text-negative">
-                Weights must total 100.00% to publish.
-              </p>
-            ) : null}
-          </div>
-        </SetupSection>
+          {!isBalanced ? (
+            <p className="px-1 text-xs text-negative">
+              Weights must total 100.00% to continue.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
 
-        <SetupSection
-          icon={LockSimpleIcon}
-          title="Methodology"
-          description={
-            shouldLockMethodology
-              ? "Locked at publication, permanently."
-              : "Editable after publication."
-          }
-          status={statusOf("publish", true)}
-          isOpen={openSection === "publish"}
-          onToggle={() => toggle("publish")}
-        >
+      {step === 2 ? (
+        <div className="space-y-4">
           <label className="flex items-start gap-3 rounded-2xl border border-line p-4">
             <input
               type="checkbox"
@@ -246,33 +241,53 @@ export const IndexBuilderForm = () => {
               </span>
             </span>
           </label>
-        </SetupSection>
-      </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
+          <dl className="space-y-2.5 rounded-2xl bg-surface-subtle p-4 text-sm">
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-ink-subtle">Publishing as</dt>
+              <dd className="truncate font-mono text-xs text-ink">{ensName}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-ink-subtle">Constituents</dt>
+              <dd className="tabular-nums text-ink">
+                {selectedSymbols.length}
+              </dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-ink-subtle">Allocated</dt>
+              <dd className="tabular-nums text-positive">
+                {formatWeight(totalWeightBps)}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      ) : null}
+
+      <div className="mt-6 grid grid-cols-2 gap-3 border-t border-line pt-6">
         <button
           type="button"
-          onClick={() => {
-            setName("");
-            setDescription("");
-            replaceSymbols(DEFAULT_SYMBOLS);
-            setOpenSection("identity");
-          }}
+          onClick={() => (step === 0 ? reset() : setStep(step - 1))}
           className="rounded-xl border border-line py-3 text-sm font-medium text-ink transition-colors duration-150 ease-out hover:bg-surface-hover"
         >
-          Reset
+          {step === 0 ? "Reset" : "Back"}
         </button>
+
         <button
-          type="submit"
-          disabled={!canSubmit}
+          type={isLast ? "submit" : "button"}
+          onClick={() => {
+            if (!isLast) {
+              setStep(step + 1);
+            }
+          }}
+          disabled={!canAdvance}
           className={cn(
             "rounded-xl py-3 text-sm font-semibold transition-colors duration-150 ease-out",
-            canSubmit
+            canAdvance
               ? "bg-ink text-ink-inverse hover:opacity-90"
               : "bg-surface-subtle text-ink-subtle",
           )}
         >
-          Publish index
+          {isLast ? "Publish index" : "Continue"}
         </button>
       </div>
     </form>
