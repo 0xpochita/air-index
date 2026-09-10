@@ -1,5 +1,6 @@
 import { ArrowLeftIcon, LockSimpleIcon } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { ResolveNameButton } from "@/components/ens/ResolveNameButton";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
@@ -46,6 +47,7 @@ export const IndexDetailPage = ({ index }: IndexDetailPageProps) => (
             ) : null}
           </div>
           <p className="flex items-center gap-1">
+            <EnsLogo size={15} className="mr-1" />
             <span className="font-mono text-sm text-ink-muted">
               {index.ensName}
             </span>

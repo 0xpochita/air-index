@@ -4,6 +4,7 @@ import { ShuffleIcon } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
@@ -286,7 +287,8 @@ export const IndexBuilderForm = () => {
               className={FIELD_CLASS}
             />
           </div>
-          <p className="rounded-xl bg-surface-subtle px-3.5 py-3 font-mono text-xs text-ink-muted">
+          <p className="flex items-center gap-2 rounded-xl bg-surface-subtle px-3.5 py-3 font-mono text-xs text-ink-muted">
+            <EnsLogo size={13} />
             {ensName}
           </p>
         </div>

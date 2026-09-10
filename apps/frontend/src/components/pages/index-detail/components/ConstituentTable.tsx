@@ -1,4 +1,5 @@
 import { ArrowSquareOutIcon } from "@phosphor-icons/react/dist/ssr";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { ResolveNameButton } from "@/components/ens/ResolveNameButton";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenIcon } from "@/components/ui/TokenIcon";
@@ -61,6 +62,7 @@ export const ConstituentTable = ({
                * argue against itself. Copy it into any ENS library instead.
                */}
               <span className="flex items-center gap-1">
+                <EnsLogo size={13} className="mr-1" />
                 <span className="font-mono text-xs text-ink-muted">
                   {`${constituent.token.symbol}.${ensName}`}
                 </span>

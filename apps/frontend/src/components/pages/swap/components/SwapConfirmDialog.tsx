@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { AnimatePresence, motion } from "motion/react";
 import { type ReactNode, useEffect, useRef } from "react";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { SITE } from "@/config/site";
 import { formatAmount, formatUsd, truncateAddress } from "@/lib/format";
 
@@ -154,8 +155,11 @@ export const SwapConfirmDialog = ({
                 <span className="block truncate text-sm font-semibold text-ink">
                   {index.name}
                 </span>
-                <span className="block truncate font-mono text-xs text-ink-muted">
-                  {index.ensName}
+                <span className="flex items-center gap-1.5">
+                  <EnsLogo size={12} />
+                  <span className="truncate font-mono text-xs text-ink-muted">
+                    {index.ensName}
+                  </span>
                 </span>
               </span>
             </div>

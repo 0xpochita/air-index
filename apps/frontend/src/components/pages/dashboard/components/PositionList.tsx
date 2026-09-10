@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { SoftCard } from "@/components/ui/SoftCard";
@@ -41,8 +42,11 @@ export const PositionList = ({ positions }: PositionListProps) => (
                   <span className="block truncate text-sm font-semibold text-ink">
                     {position.index.name}
                   </span>
-                  <span className="block truncate font-mono text-xs text-ink-muted">
-                    {position.index.ensName}
+                  <span className="flex items-center gap-1.5">
+                    <EnsLogo size={12} />
+                    <span className="truncate font-mono text-xs text-ink-muted">
+                      {position.index.ensName}
+                    </span>
                   </span>
                 </span>
               </span>

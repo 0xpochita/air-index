@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef } from "react";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { SITE } from "@/config/site";
 import { formatWeight, truncateAddress } from "@/lib/format";
@@ -119,8 +120,11 @@ export const PublishConfirmDialog = ({
                 <span className="block text-sm font-semibold text-ink">
                   {name}
                 </span>
-                <span className="mt-0.5 block font-mono text-xs text-ink-muted">
-                  {ensName}
+                <span className="mt-0.5 flex items-center justify-center gap-1.5">
+                  <EnsLogo size={12} />
+                  <span className="font-mono text-xs text-ink-muted">
+                    {ensName}
+                  </span>
                 </span>
               </span>
             </div>

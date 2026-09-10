@@ -4,6 +4,7 @@ import {
   LockSimpleIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { indexHref } from "@/config/navigation";
 import type { LiveIndex } from "@/lib/onchain/vaults";
@@ -73,8 +74,11 @@ export const IndexTable = ({ indexes }: IndexTableProps) => (
                     />
                   )}
                 </span>
-                <span className="mt-0.5 block truncate font-mono text-xs text-ink-muted">
-                  {index.ensName}
+                <span className="mt-0.5 flex items-center gap-1.5">
+                  <EnsLogo size={12} />
+                  <span className="truncate font-mono text-xs text-ink-muted">
+                    {index.ensName}
+                  </span>
                 </span>
               </Link>
             </td>

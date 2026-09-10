@@ -2,11 +2,11 @@
 
 import { MagnifyingGlassIcon, XIcon } from "@phosphor-icons/react/dist/ssr";
 import { AnimatePresence, motion } from "motion/react";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { type ResolvedName, resolveName } from "@/lib/ens/resolve";
+import { EnsLogo } from "./EnsLogo";
 import { ResolveResult } from "./ResolveResult";
 
 const PANEL = {
@@ -103,13 +103,7 @@ export const ResolveNameButton = ({
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex min-w-0 items-center gap-3">
-                <Image
-                  src="/tokens/ens.png"
-                  alt=""
-                  width={36}
-                  height={36}
-                  className="size-9 shrink-0 rounded-full"
-                />
+                <EnsLogo size={36} />
                 <div className="min-w-0">
                   <p className="text-xs text-ink-subtle">
                     Resolved through the

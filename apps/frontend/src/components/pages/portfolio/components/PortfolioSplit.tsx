@@ -8,6 +8,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { AllocationRows } from "@/components/portfolio/AllocationRows";
 import { ButtonLink } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -204,6 +205,12 @@ export const PortfolioSplit = ({
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-medium text-ink">
                           {position.index.name}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <EnsLogo size={12} />
+                          <span className="truncate font-mono text-xs text-ink-muted">
+                            {position.index.ensName}
+                          </span>
                         </span>
                         <span className="block truncate text-xs tabular-nums text-ink-subtle">
                           {`${formatAmount(position.units)} units · ${(shareBps / 100).toFixed(1)}%`}

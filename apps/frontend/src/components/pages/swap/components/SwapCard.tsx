@@ -3,6 +3,7 @@
 import { ArrowsDownUpIcon } from "@phosphor-icons/react/dist/ssr";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { EnsLogo } from "@/components/ens/EnsLogo";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
@@ -277,8 +278,11 @@ export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
             <h1 className="truncate text-base font-semibold text-ink">
               {live.name}
             </h1>
-            <p className="truncate font-mono text-xs text-ink-subtle">
-              {live.ensName}
+            <p className="flex items-center gap-1.5">
+              <EnsLogo size={12} />
+              <span className="truncate font-mono text-xs text-ink-subtle">
+                {live.ensName}
+              </span>
             </p>
           </div>
         </div>
