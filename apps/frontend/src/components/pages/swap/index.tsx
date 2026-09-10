@@ -14,7 +14,7 @@ interface SwapPageProps {
 
 export const SwapPage = ({ indexSlug }: SwapPageProps) => {
   const { liveIndexes } = usePortfolio();
-  const live =
+  const initial =
     liveIndexes.find((entry) => entry.slug === indexSlug) ?? liveIndexes[0];
 
   return (
@@ -32,8 +32,8 @@ export const SwapPage = ({ indexSlug }: SwapPageProps) => {
       <div className="grid gap-5 lg:grid-cols-[20rem_minmax(0,1fr)]">
         <SwapArtPanel />
         <Card className="p-5">
-          {live ? (
-            <SwapCard live={live} liveIndexes={liveIndexes} />
+          {initial ? (
+            <SwapCard initialSlug={initial.slug} liveIndexes={liveIndexes} />
           ) : (
             <EmptyState
               title="No index is tradeable yet"

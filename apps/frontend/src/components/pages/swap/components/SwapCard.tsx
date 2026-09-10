@@ -75,11 +75,14 @@ interface Pending {
 }
 
 interface SwapCardProps {
-  live: LiveIndex;
+  initialSlug: string;
   liveIndexes: LiveIndex[];
 }
 
-export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
+export const SwapCard = ({ initialSlug, liveIndexes }: SwapCardProps) => {
+  const [slug, setSlug] = useState(initialSlug);
+  const live =
+    liveIndexes.find((entry) => entry.slug === slug) ?? liveIndexes[0];
   const { address, hasProvider, isSepolia, connect, switchNetwork } =
     useWallet();
   const { isLoading } = usePortfolio();
@@ -99,14 +102,29 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
     <TokenStack constituents={live.constituents} size="sm" maxVisible={2} />
   );
 
+  /**
+   * The quote side is not a choice. Every vault's `quote` is immutable and it is
+   * mUSDC, so a dropdown here would offer options that revert.
+   */
   const quoteChip = (
     <AssetChip
       icon={<TokenIcon token={form.quote} size="sm" />}
       label={form.quoteSymbol}
     />
   );
-  const indexChip = (
-    <AssetChip icon={indexIcon} label={ensLabel(live.ensName)} />
+
+  const indexControl = (
+    <AssetSelect
+      icon={indexIcon}
+      label={ensLabel(live.ensName)}
+      fieldLabel="Index"
+      value={live.slug}
+      options={liveIndexes.map((entry) => ({
+        value: entry.slug,
+        label: entry.name,
+      }))}
+      onChange={setSlug}
+    />
   );
 
   const alternateControl = alternate ? (
@@ -133,12 +151,12 @@ export const SwapCard = ({ live, liveIndexes }: SwapCardProps) => {
 
   const payControlByMode: Record<SwapMode, ReactNode> = {
     deposit: quoteChip,
-    swap: indexChip,
-    redeem: indexChip,
+    swap: indexControl,
+    redeem: indexControl,
   };
 
   const receiveControlByMode: Record<SwapMode, ReactNode> = {
-    deposit: indexChip,
+    deposit: indexControl,
     swap: alternateControl,
     redeem: quoteChip,
   };

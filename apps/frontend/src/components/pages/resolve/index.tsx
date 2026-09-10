@@ -14,13 +14,6 @@ import { truncateAddress } from "@/lib/format";
 
 const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
 
-const SUGGESTIONS = [
-  `big-five.${PROTOCOL_ROOT}`,
-  `btc.big-five.${PROTOCOL_ROOT}`,
-  `rebalancer.big-five.${PROTOCOL_ROOT}`,
-  `bg5.${PROTOCOL_ROOT}`,
-];
-
 const Row = ({
   label,
   children,
@@ -47,7 +40,7 @@ const AddressLink = ({ address }: { address: `0x${string}` }) => (
 );
 
 export const ResolvePage = () => {
-  const [input, setInput] = useState(`btc.big-five.${PROTOCOL_ROOT}`);
+  const [input, setInput] = useState("");
   const [result, setResult] = useState<ResolvedName | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
@@ -81,7 +74,6 @@ export const ResolvePage = () => {
             event.preventDefault();
             lookup(input);
           }}
-          className="space-y-3"
         >
           <div className="flex gap-2">
             <label htmlFor="ens-name" className="sr-only">
@@ -93,7 +85,7 @@ export const ResolvePage = () => {
               onChange={(event) => setInput(event.target.value)}
               spellCheck={false}
               autoComplete="off"
-              placeholder={`btc.big-five.${PROTOCOL_ROOT}`}
+              placeholder={`name.${PROTOCOL_ROOT}`}
               className="soft-inset w-full min-w-0 rounded-xl bg-surface-subtle px-3.5 py-3 font-mono text-sm text-ink outline-none placeholder:text-ink-subtle focus-visible:ring-2 focus-visible:ring-accent/40"
             />
             <button
@@ -104,22 +96,6 @@ export const ResolvePage = () => {
               <MagnifyingGlassIcon size={15} weight="bold" aria-hidden />
               {isPending ? "Reading…" : "Resolve"}
             </button>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5">
-            {SUGGESTIONS.map((suggestion) => (
-              <button
-                key={suggestion}
-                type="button"
-                onClick={() => {
-                  setInput(suggestion);
-                  lookup(suggestion);
-                }}
-                className="rounded-full bg-surface-subtle px-2.5 py-1 font-mono text-[11px] text-ink-muted transition-colors duration-150 ease-out hover:bg-surface-hover hover:text-ink"
-              >
-                {suggestion}
-              </button>
-            ))}
           </div>
         </form>
       </SoftCard>

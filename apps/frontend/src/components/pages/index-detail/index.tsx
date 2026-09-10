@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
 import { Card, CardHeader } from "@/components/ui/Card";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { TokenStack } from "@/components/ui/TokenStack";
 import { swapHref } from "@/config/navigation";
 import type { LiveIndex } from "@/lib/onchain/vaults";
@@ -43,7 +44,12 @@ export const IndexDetailPage = ({ index }: IndexDetailPageProps) => (
               </Badge>
             ) : null}
           </div>
-          <p className="font-mono text-sm text-ink-muted">{index.ensName}</p>
+          <p className="flex items-center gap-1">
+            <span className="font-mono text-sm text-ink-muted">
+              {index.ensName}
+            </span>
+            <CopyButton value={index.ensName} label="Copy ENS name" size={14} />
+          </p>
           {index.description ? (
             <p className="max-w-2xl text-sm text-ink-muted">
               {index.description}
