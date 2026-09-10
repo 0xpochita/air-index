@@ -1,16 +1,25 @@
-import type { QuoteAsset } from "@/types/index-fund";
-import { TOKENS } from "./tokens";
+import type { TokenSymbol } from "@/types/index-fund";
 
-const QUOTE_ASSETS: QuoteAsset[] = [
-  { token: TOKENS.usdc, priceUsd: 1, balance: 12_480.52 },
-  { token: TOKENS.weth, priceUsd: 3_142.88, balance: 2.4183 },
-  { token: TOKENS.wbtc, priceUsd: 68_402.15, balance: 0.0715 },
-  { token: TOKENS.dai, priceUsd: 0.999, balance: 3_050.0 },
-];
+/** Assets a deposit can be paid in. Every one of them is a deployed mock ERC20. */
+export const QUOTE_SYMBOLS = [
+  "usdc",
+  "weth",
+  "wbtc",
+  "dai",
+] as const satisfies readonly TokenSymbol[];
 
-export const getQuoteAssets = (): QuoteAsset[] => QUOTE_ASSETS;
+export type QuoteSymbol = (typeof QUOTE_SYMBOLS)[number];
 
-export const getDefaultQuoteAsset = (): QuoteAsset => QUOTE_ASSETS[0];
+/**
+ * Still mock, and deliberately so. Balances are read from the chain but there
+ * is no price feed on Sepolia worth trusting, so valuations are fixed marks.
+ */
+export const QUOTE_PRICE_USD: Record<QuoteSymbol, number> = {
+  usdc: 1,
+  weth: 3_142.88,
+  wbtc: 68_402.15,
+  dai: 0.999,
+};
 
-export const getIndexUnitBalance = (slug: string): number =>
-  ({ "big-five": 41.82, "defi-blue": 15.54, "safe-stables": 8.12 })[slug] ?? 0;
+/** The asset every vault settles in, so it is what `deposit` pulls. */
+export const SETTLEMENT_SYMBOL: QuoteSymbol = "usdc";

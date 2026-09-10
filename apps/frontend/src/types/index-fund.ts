@@ -40,7 +40,9 @@ export type TokenSymbol = (typeof TOKEN_SYMBOLS)[number];
 export interface Token {
   symbol: TokenSymbol;
   name: string;
+  /** Zero for a native asset, and for anything not yet deployed to Sepolia. */
   address: `0x${string}`;
+  decimals: number;
 }
 
 export interface Constituent {
@@ -80,20 +82,12 @@ export interface IndexCollection {
 
 export interface PortfolioPosition {
   index: IndexFund;
+  /** Share token balance, as held onchain. */
+  units: number;
   valueUsd: number;
   dayChangePct: number;
-}
-
-export interface QuoteAsset {
-  token: Token;
-  priceUsd: number;
-  balance: number;
 }
 
 export const SWAP_MODES = ["deposit", "swap", "redeem"] as const;
 
 export type SwapMode = (typeof SWAP_MODES)[number];
-
-export const SWAP_ROUTES = ["direct", "aggregator"] as const;
-
-export type SwapRoute = (typeof SWAP_ROUTES)[number];

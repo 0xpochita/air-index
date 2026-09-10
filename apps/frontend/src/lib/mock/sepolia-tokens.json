@@ -1,0 +1,18 @@
+{
+  "chainId": 11155111,
+  "tokens": {
+    "btc": "0x9d453ba64b6a5be1371044278acdc53dc22657a1",
+    "weth": "0x7b908ba82bd581bbcae6a399bc97827e8a9bb0ac",
+    "wbtc": "0x38869abe2a73dea37d213fa135fd7c110b96ddcc",
+    "sol": "0x7ec835e606fd8e5195cc9ad1fdfd0280d53b634a",
+    "xrp": "0x460ff0a01ddbbfef8c58ccd112a2278fdf71b349",
+    "doge": "0x3db9503cdaec5606578bf833160e54c9ace3145b",
+    "uni": "0xf38e0784caea4b6975fac4bc4823fd7efe901e7c",
+    "aave": "0x3be50ec984ba96942332502e7043fb59ca94d0c8",
+    "mkr": "0x71a766178bf3bc49cdbcba79f079631f094fc600",
+    "ldo": "0x28dee2d5653397fd6317f4ded5de83f0958c2d6b",
+    "crv": "0x6802342ed12e5164efdf98a4b2637b5d46192ea4",
+    "usdc": "0xe322a0033293e8bcfa75c3b2cc52db591091148b",
+    "dai": "0x82b9c6817e18396ae20dbd260bbc88607b7f920a"
+  }
+}

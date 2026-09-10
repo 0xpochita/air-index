@@ -13,10 +13,13 @@
     "probe:w2": "tsx scripts/probe-w2.ts",
     "bootstrap": "tsx scripts/bootstrap.ts",
     "create-index": "tsx scripts/create-index.ts",
+    "deploy-tokens": "tsx scripts/deploy-tokens.ts",
+    "wire-index": "tsx scripts/wire-index.ts",
     "check:onchain": "tsx scripts/check-onchain.ts",
     "probe:w3": "tsx scripts/probe-w3.ts",
     "rebalance": "tsx scripts/rebalance.ts",
-    "set-alias": "tsx scripts/set-alias.ts"
+    "set-alias": "tsx scripts/set-alias.ts",
+    "contracts:build": "forge build --root ../contracts"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
