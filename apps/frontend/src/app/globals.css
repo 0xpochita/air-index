@@ -86,6 +86,68 @@
 }
 
 @layer components {
+  /*
+   * The soft-UI wallet card. Three surfaces stacked: a puffy outer shell, a
+   * mesh-gradient panel inset into it, and pill buttons that read as carved
+   * out of the same material.
+   */
+  .soft-shell {
+    box-shadow:
+      0 1px 2px oklch(0.45 0.06 250 / 0.05),
+      0 20px 44px -20px oklch(0.45 0.1 250 / 0.4),
+      inset 0 1px 0 oklch(1 0 0 / 0.9);
+  }
+
+  .soft-pill {
+    box-shadow:
+      inset 0 1px 2px oklch(0.45 0.06 250 / 0.06),
+      inset 0 -1px 0 oklch(1 0 0 / 0.8);
+    transition: box-shadow 150ms ease-out;
+  }
+
+  .soft-pill:hover {
+    box-shadow:
+      inset 0 1px 3px oklch(0.45 0.06 250 / 0.1),
+      inset 0 -1px 0 oklch(1 0 0 / 0.8);
+  }
+
+  .soft-badge {
+    box-shadow:
+      0 1px 2px oklch(0.45 0.06 250 / 0.1),
+      inset 0 1px 0 oklch(1 0 0 / 0.7);
+  }
+
+  /* Five blurred stops rather than an image, so it scales to any card width. */
+  .wallet-mesh {
+    background-color: oklch(0.975 0.012 250);
+    background-image:
+      radial-gradient(
+        at 10% 16%,
+        oklch(0.87 0.075 250 / 0.85) 0px,
+        transparent 55%
+      ),
+      radial-gradient(
+        at 74% 6%,
+        oklch(0.86 0.085 288 / 0.8) 0px,
+        transparent 52%
+      ),
+      radial-gradient(
+        at 94% 58%,
+        oklch(0.9 0.06 205 / 0.7) 0px,
+        transparent 55%
+      ),
+      radial-gradient(
+        at 38% 96%,
+        oklch(0.93 0.055 152 / 0.6) 0px,
+        transparent 52%
+      ),
+      radial-gradient(
+        at 58% 44%,
+        oklch(0.96 0.03 325 / 0.55) 0px,
+        transparent 60%
+      );
+  }
+
   .glow-btn {
     position: relative;
     isolation: isolate;

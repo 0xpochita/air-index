@@ -11,6 +11,7 @@ import { PositionList } from "./components/PositionList";
 
 export const DashboardPage = () => {
   const { positions, totalValueUsd } = usePortfolio();
+  const allocation = getPortfolioAllocation(positions);
 
   return (
     <div className="space-y-6">
@@ -18,6 +19,7 @@ export const DashboardPage = () => {
         totalValueUsd={totalValueUsd}
         dayChangePct={getWeightedDayChangePct(positions)}
         indexCount={positions.length}
+        allocation={allocation}
       />
 
       <div className="grid gap-4 lg:grid-cols-5">
@@ -25,7 +27,7 @@ export const DashboardPage = () => {
           <PositionList positions={positions} />
         </div>
         <div className="lg:col-span-2">
-          <AllocationCard allocation={getPortfolioAllocation(positions)} />
+          <AllocationCard allocation={allocation} />
         </div>
       </div>
     </div>

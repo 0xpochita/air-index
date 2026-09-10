@@ -1,63 +1,159 @@
-import Image from "next/image";
-import { ButtonLink } from "@/components/ui/Button";
-import { GlowButton } from "@/components/ui/glow-button";
-import { ReturnValue } from "@/components/ui/ReturnValue";
-import { SITE } from "@/config/site";
-import { formatUsd } from "@/lib/format";
+"use client";
 
-const IMAGE_QUALITY = 90;
-const IMAGE_FADE = "linear-gradient(to right, transparent 0%, black 60%)";
+import type { Icon } from "@phosphor-icons/react";
+import {
+  ArrowsLeftRightIcon,
+  CheckIcon,
+  CompassIcon,
+  CopyIcon,
+  PlusIcon,
+} from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { useState } from "react";
+import { TokenStack } from "@/components/ui/TokenStack";
+import { SITE } from "@/config/site";
+import { cn } from "@/lib/cn";
+import { formatSignedPercent, formatUsd, truncateAddress } from "@/lib/format";
+import { useWallet } from "@/lib/onchain/WalletProvider";
+import type { AllocationSlice } from "@/lib/portfolio";
+import type { Constituent } from "@/types/index-fund";
+
+const MAX_STACKED = 4;
+const COPIED_MS = 1600;
+
+const ACTIONS: ReadonlyArray<{ href: string; label: string; icon: Icon }> = [
+  { href: "/swap", label: "Swap", icon: ArrowsLeftRightIcon },
+  { href: "/create", label: "Create", icon: PlusIcon },
+  { href: "/explore", label: "Explore", icon: CompassIcon },
+];
 
 interface PortfolioHeroProps {
   totalValueUsd: number;
   dayChangePct: number;
   indexCount: number;
+  allocation: AllocationSlice[];
 }
+
+/** The stack wants weights; look-through shares already are weights. */
+const toStack = (allocation: AllocationSlice[]): Constituent[] =>
+  allocation.map((slice) => ({
+    token: slice.token,
+    weightBps: slice.shareBps,
+  }));
+
+const CopyAddress = ({ address }: { address: `0x${string}` }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), COPIED_MS);
+    } catch {
+      /* Clipboard is blocked in some contexts; the address is on screen anyway. */
+    }
+  };
+
+  const CopyStateIcon = copied ? CheckIcon : CopyIcon;
+
+  return (
+    <button
+      type="button"
+      onClick={copy}
+      title="Copy address"
+      className="soft-badge rounded-xl bg-surface/70 p-2 text-ink-muted transition-colors duration-150 ease-out hover:bg-surface hover:text-ink"
+    >
+      <CopyStateIcon
+        size={16}
+        weight={copied ? "bold" : "regular"}
+        aria-hidden
+        className={cn(copied && "text-positive")}
+      />
+      <span className="sr-only">
+        {copied ? "Address copied" : "Copy address"}
+      </span>
+    </button>
+  );
+};
 
 export const PortfolioHero = ({
   totalValueUsd,
   dayChangePct,
   indexCount,
-}: PortfolioHeroProps) => (
-  <section className="relative isolate min-h-48 overflow-hidden rounded-xl border border-canvas/70 bg-surface/72 shadow-glass backdrop-blur-xl">
-    <div
-      aria-hidden
-      style={{ maskImage: IMAGE_FADE, WebkitMaskImage: IMAGE_FADE }}
-      className="pointer-events-none absolute inset-y-0 right-0 w-3/5 opacity-70 sm:w-1/2 lg:w-2/5"
-    >
-      <Image
-        src="/assets/flowers-bg.jpg"
-        alt=""
-        fill
-        priority
-        quality={IMAGE_QUALITY}
-        sizes="(max-width: 640px) 60vw, (max-width: 1024px) 50vw, 460px"
-        className="object-cover object-center"
-      />
-    </div>
+  allocation,
+}: PortfolioHeroProps) => {
+  const { address } = useWallet();
+  const stack = toStack(allocation);
+  const isUp = dayChangePct >= 0;
 
-    <div className="relative flex max-w-lg flex-col gap-4 p-6">
-      <div className="space-y-1.5">
-        <p className="text-sm text-ink-muted">Portfolio value</p>
-        <p className="text-3xl font-semibold tracking-tight tabular-nums text-ink">
+  return (
+    <section className="soft-shell rounded-[1.75rem] bg-surface/90 p-2.5 backdrop-blur-xl">
+      <div className="wallet-mesh relative overflow-hidden rounded-[1.35rem] p-6 sm:p-7">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="text-sm text-ink-muted">Portfolio</p>
+            <p className="mt-0.5 truncate font-mono text-sm font-medium text-ink">
+              {address ? truncateAddress(address) : "Not connected"}
+            </p>
+          </div>
+          {address ? <CopyAddress address={address} /> : null}
+        </div>
+
+        <p className="mt-6 text-5xl font-semibold tracking-tighter tabular-nums text-ink sm:text-6xl">
           {formatUsd(totalValueUsd)}
         </p>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-ink-muted">
-          <ReturnValue value={dayChangePct} />
-          <span>past 24 hours</span>
-          <span aria-hidden>·</span>
-          <span>{indexCount === 1 ? "1 index" : `${indexCount} indexes`}</span>
-          <span aria-hidden>·</span>
-          <span>{SITE.network}</span>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          {stack.length > 0 ? (
+            <span className="flex items-center gap-2.5">
+              <TokenStack
+                constituents={stack}
+                size="md"
+                maxVisible={MAX_STACKED}
+              />
+              <span className="text-xs text-ink-muted">
+                {`${indexCount === 1 ? "1 index" : `${indexCount} indexes`} · ${SITE.network}`}
+              </span>
+            </span>
+          ) : (
+            <span className="text-xs text-ink-muted">
+              {address
+                ? `No positions yet · ${SITE.network}`
+                : `Connect a wallet to see your positions · ${SITE.network}`}
+            </span>
+          )}
+
+          {stack.length > 0 ? (
+            <span
+              className={cn(
+                "rounded-full px-3 py-1.5 text-sm font-semibold tabular-nums",
+                isUp
+                  ? "bg-positive/15 text-positive"
+                  : "bg-negative/12 text-negative",
+              )}
+            >
+              {formatSignedPercent(dayChangePct)}
+            </span>
+          ) : null}
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <GlowButton href="/explore" label="Explore indexes" />
-        <ButtonLink href="/create" variant="secondary">
-          Create an index
-        </ButtonLink>
+      <div className="mt-2.5 grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+        {ACTIONS.map((action) => (
+          <Link
+            key={action.href}
+            href={action.href}
+            className="soft-pill flex items-center gap-3 rounded-[1.15rem] bg-surface-subtle py-3 pr-4 pl-3"
+          >
+            <span className="soft-badge flex size-9 shrink-0 items-center justify-center rounded-full bg-surface text-accent">
+              <action.icon size={16} weight="bold" aria-hidden />
+            </span>
+            <span className="text-sm font-semibold text-ink">
+              {action.label}
+            </span>
+          </Link>
+        ))}
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
