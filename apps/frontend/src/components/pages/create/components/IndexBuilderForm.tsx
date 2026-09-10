@@ -2,12 +2,18 @@
 
 import { ShuffleIcon } from "@phosphor-icons/react/dist/ssr";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { TokenStack } from "@/components/ui/TokenStack";
+import { TxSuccessDialog } from "@/components/ui/TxSuccessDialog";
+import { indexHref } from "@/config/navigation";
 import { SITE } from "@/config/site";
 import { cn } from "@/lib/cn";
-import { formatWeight } from "@/lib/format";
-import { TOKENS } from "@/lib/mock/tokens";
+import { formatWeight, truncateAddress } from "@/lib/format";
+import { isDeployed, TOKENS } from "@/lib/mock/tokens";
+import { useCreateIndex } from "@/lib/onchain/useCreateIndex";
+import { useWallet } from "@/lib/onchain/WalletProvider";
 import { TOKEN_SYMBOLS, type TokenSymbol } from "@/types/index-fund";
 import { isSameSelection, matchTheme } from "../themes";
 import { ConstituentRow } from "./ConstituentRow";
@@ -75,7 +81,7 @@ const LABEL_CLASS = "mb-1.5 block text-xs font-medium text-ink-subtle";
 const STEPS: StepDefinition[] = [
   { id: "identity", label: "Identity" },
   { id: "constituents", label: "Constituents" },
-  { id: "methodology", label: "Methodology" },
+  { id: "publish", label: "Publish" },
 ];
 
 const toSlug = (value: string): string =>
@@ -96,6 +102,7 @@ const buildEvenWeights = (symbols: TokenSymbol[]): Record<string, number> => {
 };
 
 export const IndexBuilderForm = () => {
+  const router = useRouter();
   const [step, setStep] = useState(0);
   const [name, setName] = useState(PRESETS[0].name);
   const [description, setDescription] = useState(PRESETS[0].description);
@@ -107,7 +114,10 @@ export const IndexBuilderForm = () => {
   );
   /** Touch the token list once and the words stop overruling you. */
   const [isSelectionManual, setIsSelectionManual] = useState(false);
-  const [shouldLockMethodology, setShouldLockMethodology] = useState(true);
+  const [isTransferable, setIsTransferable] = useState(true);
+  const { address, hasProvider, isSepolia, connect, switchNetwork } =
+    useWallet();
+  const { publish, isPending, error, created, dismiss } = useCreateIndex();
 
   const slug = toSlug(name);
   const ensName = `${slug || PLACEHOLDER_SLUG}.${SITE.protocolRoot}`;
@@ -121,8 +131,9 @@ export const IndexBuilderForm = () => {
     [selectedSymbols, weights],
   );
 
+  /** A token with no Sepolia deployment would publish a weight and no address. */
   const availableSymbols = TOKEN_SYMBOLS.filter(
-    (symbol) => !selectedSymbols.includes(symbol),
+    (symbol) => !selectedSymbols.includes(symbol) && isDeployed(TOKENS[symbol]),
   );
   const isBalanced = totalWeightBps === TOTAL_WEIGHT_BPS;
   const hasIdentity = slug.length > 0;
@@ -134,6 +145,22 @@ export const IndexBuilderForm = () => {
     isStepValid.slice(0, index).every(Boolean);
   const isLast = step === STEPS.length - 1;
   const canAdvance = isStepValid[step];
+
+  const publishLabel = (() => {
+    if (!isLast) {
+      return "Continue";
+    }
+    if (isPending) {
+      return "Publishing…";
+    }
+    if (!hasProvider || !address) {
+      return "Connect wallet";
+    }
+    if (!isSepolia) {
+      return `Switch to ${SITE.network}`;
+    }
+    return "Publish index";
+  })();
 
   const replaceSymbols = (nextSymbols: TokenSymbol[]) => {
     setSelectedSymbols(nextSymbols);
@@ -176,14 +203,24 @@ export const IndexBuilderForm = () => {
 
   const reset = () => {
     applyPreset(PRESETS[0]);
-    setShouldLockMethodology(true);
+    setIsTransferable(true);
     setStep(0);
   };
 
   return (
     <form
       className="soft-shell rounded-[1.75rem] bg-surface p-6 sm:p-7"
-      onSubmit={(event) => event.preventDefault()}
+      onSubmit={(event) => {
+        event.preventDefault();
+        publish({
+          slug,
+          name,
+          description,
+          symbols: selectedSymbols,
+          weights,
+          transferable: isTransferable,
+        });
+      }}
     >
       <header className="flex items-center gap-3.5 border-b border-line pb-5">
         <Image
@@ -328,19 +365,18 @@ export const IndexBuilderForm = () => {
           <label className="flex items-start gap-3 rounded-2xl border border-line p-4">
             <input
               type="checkbox"
-              checked={shouldLockMethodology}
-              onChange={(event) =>
-                setShouldLockMethodology(event.target.checked)
-              }
+              checked={isTransferable}
+              onChange={(event) => setIsTransferable(event.target.checked)}
               className="mt-0.5 size-4 shrink-0 accent-accent"
             />
             <span>
               <span className="block text-sm font-semibold text-ink">
-                Lock methodology
+                Transferable
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-ink-muted">
-                Revokes the contenthash, clear and upgrade roles. Nobody can
-                rewrite it afterwards, including you.
+                Grants CAN_TRANSFER_ADMIN, which has no regular variant and
+                cannot be added later. Leave it off and the index is soulbound
+                for good.
               </span>
             </span>
           </label>
@@ -362,7 +398,22 @@ export const IndexBuilderForm = () => {
                 {formatWeight(totalWeightBps)}
               </dd>
             </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt className="text-ink-subtle">Owner</dt>
+              <dd className="font-mono text-xs text-ink">
+                {address ? truncateAddress(address) : "Not connected"}
+              </dd>
+            </div>
           </dl>
+
+          <p className="px-1 text-xs leading-relaxed text-ink-muted">
+            One transaction: it deploys a resolver for this index alone,
+            registers the name to you, and writes every record. Locking the
+            methodology is a separate, irreversible step on the index page
+            afterwards.
+          </p>
+
+          {error ? <p className="px-1 text-xs text-negative">{error}</p> : null}
         </div>
       ) : null}
 
@@ -376,23 +427,55 @@ export const IndexBuilderForm = () => {
         </button>
 
         <button
-          type={isLast ? "submit" : "button"}
+          type={isLast && address && isSepolia ? "submit" : "button"}
           onClick={() => {
             if (!isLast) {
               setStep(step + 1);
+              return;
+            }
+            if (!hasProvider || !address) {
+              connect();
+              return;
+            }
+            if (!isSepolia) {
+              switchNetwork();
             }
           }}
-          disabled={!canAdvance}
+          disabled={!canAdvance || isPending}
           className={cn(
             "rounded-xl py-3 text-sm font-semibold transition-colors duration-150 ease-out",
-            canAdvance
+            canAdvance && !isPending
               ? "bg-ink text-ink-inverse hover:opacity-90"
               : "bg-surface-subtle text-ink-subtle",
           )}
         >
-          {isLast ? "Publish index" : "Continue"}
+          {publishLabel}
         </button>
       </div>
+
+      <TxSuccessDialog
+        hash={created?.hash ?? null}
+        title="Index published"
+        icon={
+          <TokenStack
+            constituents={selectedSymbols.map((symbol) => ({
+              token: TOKENS[symbol],
+              weightBps: weights[symbol] ?? 0,
+            }))}
+            size="lg"
+            maxVisible={4}
+          />
+        }
+        ensName={created?.ensName ?? null}
+        detail={`${selectedSymbols.length} constituents · ${formatWeight(totalWeightBps)} allocated`}
+        onDismiss={() => {
+          const slugToOpen = created?.slug;
+          dismiss();
+          if (slugToOpen) {
+            router.push(indexHref(slugToOpen));
+          }
+        }}
+      />
     </form>
   );
 };

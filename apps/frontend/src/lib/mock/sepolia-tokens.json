@@ -12,8 +12,19 @@
     "mkr": "0x71a766178bf3bc49cdbcba79f079631f094fc600",
     "ldo": "0x28dee2d5653397fd6317f4ded5de83f0958c2d6b",
     "crv": "0x6802342ed12e5164efdf98a4b2637b5d46192ea4",
+    "link": "0x9bc13ba23426023f817d1f9ab24d0d967705bee4",
+    "comp": "0x855721fd3cf4754a266cfc3a2749ceaaff35d308",
+    "snx": "0x322c6374379ea9dbf7378ed1ed33b1dfe93e1e0e",
+    "arb": "0x123d7382f4732c73d6a13e247eca752929e691c0",
+    "op": "0xf3e284aced7d4838e042827abd9e92b31aafbe8f",
+    "matic": "0xbb5bea24b710317c5d8fb1bc3e706aa380cc2bda",
     "usdc": "0xe322a0033293e8bcfa75c3b2cc52db591091148b",
     "usdt": "0xc5cc0c47ed1142857872addddae5e6a84f7326f1",
-    "dai": "0x82b9c6817e18396ae20dbd260bbc88607b7f920a"
+    "dai": "0x82b9c6817e18396ae20dbd260bbc88607b7f920a",
+    "rpl": "0xcbb38e4c63a7f46192d0d986ff66a3bf76f3d134",
+    "fxs": "0xc6866ed01246f396b32611ec2da6fd58a9e0c992",
+    "rndr": "0x46c840994e26ace6ad6c6f3a85c6a4083484bd21",
+    "fet": "0xfc1b640250098ad2c0a522b76d347edf3736c81e",
+    "inj": "0xcfa27bc2451064c1dd62164d4ce234c7d41dfc6d"
   }
 }

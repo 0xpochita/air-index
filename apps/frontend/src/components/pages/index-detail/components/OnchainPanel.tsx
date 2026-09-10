@@ -9,6 +9,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { SITE } from "@/config/site";
 import type { OnchainIndex } from "@/lib/ens/indexes";
 import { truncateAddress } from "@/lib/format";
+import { LockMethodologyButton } from "./LockMethodologyButton";
 
 const EXPLORER_ADDRESS = "https://sepolia.etherscan.io/address/";
 
@@ -102,7 +103,10 @@ export const OnchainPanel = ({ onchain }: OnchainPanelProps) => (
               Locked
             </Badge>
           ) : (
-            <span className="text-xs text-ink-muted">Editable</span>
+            <LockMethodologyButton
+              resolver={onchain.resolver}
+              owner={onchain.owner}
+            />
           )}
         </dd>
       </div>
