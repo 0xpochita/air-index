@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://air-index-ens.vercel.app"><strong>Live demo</strong></a>
   ·
-  <a href="https://sepolia.etherscan.io/address/0xc218969258bf134e4e330e30Fa45E834386b92F2">AirIndexRegistry on Sepolia</a>
+  <a href="https://explorer.ens.dev/airindex.eth">airindex.eth on ENS </a>
 </p>
 
 ---
