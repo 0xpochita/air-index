@@ -9,9 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://air-index-ens.vercel.app"><strong>Live demo</strong></a>
-  ·
-  <a href="https://explorer.ens.dev/airindex.eth">airindex.eth on ENS </a>
+  <a href="https://air-index-ens.vercel.app"><img src="https://img.shields.io/badge/LIVE%20DEMO-VERCEL-000000?style=flat-square&labelColor=555555&logo=vercel&logoColor=white" alt="Live demo" /></a>
+  <a href="https://explorer.ens.dev/airindex.eth"><img src="https://img.shields.io/badge/ENS-AIRINDEX.ETH-0080BC?style=flat-square&labelColor=555555&logo=ens&logoColor=white" alt="airindex.eth on ENS" /></a>
 </p>
 
 ---
