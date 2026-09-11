@@ -24,6 +24,8 @@ Air Index is an index-fund protocol built entirely on **ENSv2 (Sepolia beta)**. 
 > - `getEnsAddress('btc.big-five.airindex.eth')` → the token — and that subname is **registered nowhere**
 > - `getEnsAddress('big-five.airindex.eth')` → the share token you actually hold
 
+<img width="1710" height="865" alt="image" src="https://github.com/user-attachments/assets/763f5a08-e783-4de1-9777-a355589c75b9" />
+
 ---
 
 ## What Makes Air Index Special
